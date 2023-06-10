@@ -102,6 +102,114 @@ function Board(args = {}) {
             }
             return matches;
         },
+        findValidMoves() {
+            let moves = { count: 0 };
+            for (let y = 0; y < this.height; y++) {
+                for (let x = 0; x < this.width - 1; x++) {
+                    let tileA = this.tiles[x + y * 100];
+                    let tileB = this.tiles[x + y * 100 + 1];
+                    if (!tileA || tileA.fade || !tileB || tileB.fade) continue;
+                    if (tileA.type == tileB.type) continue;
+
+                    let counter = 0;
+                    if (tileA.type == this.tiles[x + y * 100 - 99]?.type) {
+                        counter++;
+                        if (tileA.type == this.tiles[x + y * 100 - 199]?.type) {
+                            counter++;
+                        }
+                    }
+                    if (tileA.type == this.tiles[x + y * 100 + 101]?.type) {
+                        counter++;
+                        if (tileA.type == this.tiles[x + y * 100 + 201]?.type) {
+                            counter++;
+                        }
+                    }
+                    if (counter >= 2 || (
+                        tileA.type == this.tiles[x + y * 100 + 2]?.type && 
+                        tileA.type == this.tiles[x + y * 100 + 3]?.type
+                    )) {
+                        moves[x + y * 100] = { hoz: true };
+                        moves.count++;
+                        continue;
+                    }
+
+                    counter = 0;
+                    if (tileB.type == this.tiles[x + y * 100 + 100]?.type) {
+                        counter++;
+                        if (tileB.type == this.tiles[x + y * 100 + 200]?.type) {
+                            counter++;
+                        }
+                    }
+                    if (tileB.type == this.tiles[x + y * 100 - 100]?.type) {
+                        counter++;
+                        if (tileB.type == this.tiles[x + y * 100 - 200]?.type) {
+                            counter++;
+                        }
+                    }
+                    if (counter >= 2 || (
+                        tileB.type == this.tiles[x + y * 100 - 1]?.type && 
+                        tileB.type == this.tiles[x + y * 100 - 2]?.type
+                    )) {
+                        moves[x + y * 100] = { hoz: true };
+                        moves.count++;
+                        continue;
+                    }
+                }
+            }
+            for (let x = 0; x < this.width; x++) {
+                for (let y = 0; y < this.height - 1; y++) {
+                    let tileA = this.tiles[x + y * 100];
+                    let tileB = this.tiles[x + y * 100 + 100];
+                    if (!tileA || tileA.fade || !tileB || tileB.fade) continue;
+                    if (tileA.type == tileB.type) continue;
+
+                    let counter = 0;
+                    if (tileA.type == this.tiles[x + y * 100 + 99]?.type) {
+                        counter++;
+                        if (tileA.type == this.tiles[x + y * 100 + 98]?.type) {
+                            counter++;
+                        }
+                    }
+                    if (tileA.type == this.tiles[x + y * 100 + 101]?.type) {
+                        counter++;
+                        if (tileA.type == this.tiles[x + y * 100 + 102]?.type) {
+                            counter++;
+                        }
+                    }
+                    if (counter >= 2 || (
+                        tileA.type == this.tiles[x + y * 100 + 200]?.type && 
+                        tileA.type == this.tiles[x + y * 100 + 300]?.type
+                    )) {
+                        moves[x + y * 100] = { vet: true };
+                        moves.count++;
+                        continue;
+                    }
+
+                    counter = 0;
+                    if (tileB.type == this.tiles[x + y * 100 - 1]?.type) {
+                        counter++;
+                        if (tileB.type == this.tiles[x + y * 100 - 2]?.type) {
+                            counter++;
+                        }
+                    }
+                    if (tileB.type == this.tiles[x + y * 100 + 1]?.type) {
+                        counter++;
+                        if (tileB.type == this.tiles[x + y * 100 + 2]?.type) {
+                            counter++;
+                        }
+                    }
+                    if (counter >= 2 || (
+                        tileB.type == this.tiles[x + y * 100 - 100]?.type && 
+                        tileB.type == this.tiles[x + y * 100 - 200]?.type
+                    )) {
+                        moves[x + y * 100] = { vet: true };
+                        moves.count++;
+                        continue;
+                    }
+                }
+            }
+            return moves
+        },
         doMatches(matches) {
             if (matches.count == 0) return;
 

@@ -246,9 +246,15 @@ let controls = {
 
             swapPos: null,
             matches: {count: 0},
+            moves: {count: -1},
+            fallCount: 0,
+
+            score: 0,
+            cascade: 0,
             onupdate() {
                 
                 let matched = false;
+                let matchScores = [];
                 let matchTiles = {};
                 for (let id in this.matches) {
                     if (id == "count") continue;
@@ -270,6 +276,8 @@ let controls = {
                         }
                     }
                     if (matchable) {
+                        if (match.hozLength) matchScores.push(50 * 3 ** (match.hozLength - 3));
+                        if (match.vetLength) matchScores.push(50 * 3 ** (match.vetLength - 3));
                         for (let tile in tiles) {
                             matchTiles[tile] = (matchTiles[tile] ?? 0) + tiles[tiles];
                         }
@@ -281,7 +289,16 @@ let controls = {
                         this.board.tiles[tile].fade = 1e-6;
                     }
                 }
+                
+                if (matchScores.length > 0) {
+                    matchScores.sort((a, b) => b - a);
+                    for (let id in matchScores) {
+                        this.cascade++;
+                        this.score += matchScores[id] * this.cascade;
+                    }
+                }
 
+                let fallCount = 0;
                 for (let id in this.board.tiles) {
                     let tile = this.board.tiles[id];
                     if (!tile) continue;
@@ -300,6 +317,7 @@ let controls = {
                         }
                         tile.offset.y = Math.max(tile.offset.y + tile.velocity.y * delta / 1000, limit);
                         tile.velocity.y = tile.offset.y > limit ? tile.velocity.y - delta / 30 : 0;
+                        fallCount ++;
                     }
                 }
 
@@ -307,6 +325,11 @@ let controls = {
                     this.board.refill();
                     this.matches = this.board.findMatches();
                 }
+
+                if (fallCount == 0 && this.fallCount != 0) {
+                    this.moves = this.board.findValidMoves();
+                }
+                this.fallCount = fallCount;
             },
             onpointerdown(e) {
                 let size = Math.min(this.rect.width / this.board.width, this.rect.height / this.board.height);
@@ -327,8 +350,10 @@ let controls = {
                     swap();
                     let matches = this.board.findMatches();
                     console.log(matches);
-                    if (matches.count > this.matches.count) this.matches = matches;
-                    else swap();
+                    if (matches.count > this.matches.count) {
+                        this.cascade = 0;
+                        this.matches = matches;
+                    } else swap();
                     this.swapPos = null;
                 } else {
                     this.swapPos = pos;
@@ -379,7 +404,7 @@ let controls = {
                             size * tScale, 
                         );
 
-                        ctx.fillStyle = [
+                        ctx.fillStyle = tile.fade ? "#000000" : [
                             "#ff0000", "#49e400", "#0065eb", "#ff00e4", "#fb5500", "#eecb00", "#fff7ea"
                         ][tile.type];
                         ctx.fillRect(
@@ -389,8 +414,8 @@ let controls = {
                             size * tScale, 
                         );
 
-                        ctx.fillStyle = "#ffffff";
-                        ctx.strokeStyle = "#000000";
+                        ctx.fillStyle = tile.fade ? "#000000" : "#ffffff";
+                        ctx.strokeStyle = tile.fade ? "#ffffff" : "#000000";
                         ctx.font = 40 * scale * tScale + "px Arial";
                         ctx.lineWidth = 6 * scale * tScale;
                         ctx.strokeText(
@@ -404,6 +429,38 @@ let controls = {
                             this.rect.y + size * (y - tile.offset.y + .5), 
                         );
                     }
+                }
+
+                ctx.fillStyle = "#ffffff";
+                ctx.strokeStyle = "#000000";
+                ctx.font = "bold " + 50 * scale + "px Arial";
+                ctx.lineWidth = 10 * scale;
+                ctx.strokeText(
+                    this.score.toLocaleString("en-US"),
+                    this.rect.x + this.rect.width / 2, 
+                    this.rect.y - 30 * scale, 
+                );
+                ctx.fillText(
+                    this.score.toLocaleString("en-US"),
+                    this.rect.x + this.rect.width / 2, 
+                    this.rect.y - 30 * scale, 
+                );
+
+                if (this.moves.count == 0) {
+                    ctx.fillStyle = "#ffffff";
+                    ctx.strokeStyle = "#000000";
+                    ctx.font = "bold " + 70 * scale + "px Arial";
+                    ctx.lineWidth = 10 * scale;
+                    ctx.strokeText(
+                        "NO MORE MOVES LOL",
+                        this.rect.x + this.rect.width / 2, 
+                        this.rect.y + this.rect.height / 2, 
+                    );
+                    ctx.fillText(
+                        "NO MORE MOVES LOL",
+                        this.rect.x + this.rect.width / 2, 
+                        this.rect.y + this.rect.height / 2, 
+                    );
                 }
             },
             ...args
