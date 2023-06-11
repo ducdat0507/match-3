@@ -96,5 +96,5 @@ function doTouchEvent(e, type) {
 
 function bindPointerEvent(type, mouse, touch) {
     window.addEventListener(mouse, e => doMouseEvent(e, type));
-    window.addEventListener(touch, e => doTouchEvent(e, type));
+    window.addEventListener(touch, e => doTouchEvent(e, type), { passive: false });
 }
