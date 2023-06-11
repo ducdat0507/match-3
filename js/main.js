@@ -81,6 +81,7 @@ function doMouseEvent(e, type) {
     doPointerEvent(pos, scene.controls, type, e);
     e.preventDefault();
     e.stopPropagation();
+    e.stopImmediatePropagation();
 }
 function doTouchEvent(e, type) {
     for (let touch of e.changedTouches) {
@@ -90,6 +91,7 @@ function doTouchEvent(e, type) {
     }
     e.preventDefault();
     e.stopPropagation();
+    e.stopImmediatePropagation();
 }
 
 function bindPointerEvent(type, mouse, touch) {
