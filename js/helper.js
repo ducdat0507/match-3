@@ -16,6 +16,8 @@ function Board(args = {}) {
             return this.tiles[x + y * 100]
         },
         refill() {
+            let fills = [];
+
             for (let x = 0; x < this.width; x++) {
                 let cy = this.height - 1;
                 for (let y = cy; y >= 0; y--) {
@@ -36,7 +38,7 @@ function Board(args = {}) {
                 if (cy >= 0) {
                     for (let y = 0; y <= cy; y++) {
                         let yPos = Math.max(
-                            cy + (window.innerHeight / 900) / scale * this.height - 5,
+                            cy + (window.innerHeight / 800) / scale * this.height - 5,
                             this.tiles[x + (y - 1) * 100]?.offset.y ?? 0,
                         )
                         this.tiles[x + y * 100] = {
@@ -44,7 +46,14 @@ function Board(args = {}) {
                             offset: { x: 0, y: yPos },
                             velocity: { x: 0, y: cy - y },
                         }
+                        fills.push(x + y * 100);
                     }
+                }
+            }
+
+            while (this.findValidMoves().count == 0) {
+                for (let tile of fills) {
+                    this.tiles[tile].type = Math.floor(Math.random() * this.types);
                 }
             }
         },

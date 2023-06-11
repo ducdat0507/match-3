@@ -35,7 +35,7 @@ function loop() {
 
     let width = mainCanvas.width = window.innerWidth;
     let height = mainCanvas.height = window.innerHeight;
-    scale = Math.min(width / 640, height / 800, window.devicePixelRatio);
+    scale = Math.min(width / 600, height / 800, window.devicePixelRatio);
     ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, width, height);
 

@@ -249,8 +249,10 @@ let controls = {
             moves: {count: -1},
             fallCount: 0,
 
-            score: 0,
+            score: 0n,
+            lerpScore: 0,
             cascade: 0,
+            scorePopups: [],
             onupdate() {
                 
                 let matched = false;
@@ -276,8 +278,22 @@ let controls = {
                         }
                     }
                     if (matchable) {
-                        if (match.hozLength) matchScores.push(50 * 3 ** (match.hozLength - 3));
-                        if (match.vetLength) matchScores.push(50 * 3 ** (match.vetLength - 3));
+                        if (match.hozLength) matchScores.push({
+                            pos: {
+                                x: (match.hozStart % 100) + match.hozLength / 2,
+                                y: Math.floor(match.hozStart / 100) + .5,
+                            },
+                            color: this.board.tiles[match.hozStart].type,
+                            score: 50n * 3n ** BigInt(match.hozLength - 3)
+                        });
+                        if (match.vetLength) matchScores.push({
+                            pos: {
+                                x: (match.vetStart % 100) + .5,
+                                y: Math.floor(match.vetStart / 100) + match.vetLength / 2,
+                            },
+                            color: this.board.tiles[match.vetStart].type,
+                            score: 50n * 3n ** BigInt(match.vetLength - 3)
+                        });
                         for (let tile in tiles) {
                             matchTiles[tile] = (matchTiles[tile] ?? 0) + tiles[tiles];
                         }
@@ -291,12 +307,17 @@ let controls = {
                 }
                 
                 if (matchScores.length > 0) {
-                    matchScores.sort((a, b) => b - a);
+                    matchScores.sort((a, b) => Number(b.score - a.score));
                     for (let id in matchScores) {
                         this.cascade++;
-                        this.score += matchScores[id] * this.cascade;
+                        matchScores[id].score *= BigInt(this.cascade);
+                        this.score += matchScores[id].score;
+                        this.lerpScore += Number(matchScores[id].score);
+                        this.scorePopups.push(matchScores[id]);
                     }
                 }
+
+                this.lerpScore *= 0.01 ** (delta / 1000);
 
                 let fallCount = 0;
                 for (let id in this.board.tiles) {
@@ -362,6 +383,7 @@ let controls = {
             },
             render() {
                 let size = Math.min(this.rect.width / this.board.width, this.rect.height / this.board.height);
+                let colors = ["#ff0000", "#49e400", "#0065eb", "#ff00e4", "#fb5500", "#eecb00", "#fff7ea"];
 
                 // Background
                 for (let x = 0; x < this.board.width; x++) {
@@ -396,7 +418,7 @@ let controls = {
 
                         let tScale = (1 - ease(tile.fade ?? 0)) * .8;
 
-                        ctx.fillStyle = "#000000";
+                        ctx.fillStyle = tile.fade ? "#ffffff" : "#000000";
                         ctx.fillRect(
                             this.rect.x + size * (x + tile.offset.x + .525 - tScale / 2), 
                             this.rect.y + size * (y - tile.offset.y + .525 - tScale / 2), 
@@ -404,9 +426,7 @@ let controls = {
                             size * tScale, 
                         );
 
-                        ctx.fillStyle = tile.fade ? "#000000" : [
-                            "#ff0000", "#49e400", "#0065eb", "#ff00e4", "#fb5500", "#eecb00", "#fff7ea"
-                        ][tile.type];
+                        ctx.fillStyle = tile.fade ? "#000000" : colors[tile.type];
                         ctx.fillRect(
                             this.rect.x + size * (x + tile.offset.x + .5 - tScale / 2), 
                             this.rect.y + size * (y - tile.offset.y + .5 - tScale / 2), 
@@ -430,34 +450,67 @@ let controls = {
                         );
                     }
                 }
+                
+                ctx.fillStyle = "#000000";
+                
+                while (this.scorePopups.length > 0 && this.scorePopups[0].time >= 1) {
+                    this.scorePopups.shift();
+                }
+                for (let popup of this.scorePopups) {
+                    let tScale = (1 - ease(1 - Math.min(popup.time * 4 ?? 0, 1))) ** 3 * scale;
+                    ctx.globalAlpha = 1 - popup.time;
+                    ctx.font = "bold " + 40 * tScale + "px Arial";
+                    ctx.strokeStyle = colors[popup.color];
+                    ctx.lineWidth = 10 * tScale;
+                    ctx.strokeText(
+                        popup.score.toLocaleString("en-US"),
+                        this.rect.x + popup.pos.x * size, 
+                        this.rect.y + (popup.pos.y - (popup.time ?? 0)) * size, 
+                    );
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.lineWidth = 5 * tScale;
+                    ctx.strokeText(
+                        popup.score.toLocaleString("en-US"),
+                        this.rect.x + popup.pos.x * size, 
+                        this.rect.y + (popup.pos.y - (popup.time ?? 0)) * size, 
+                    );
+                    ctx.fillText(
+                        popup.score.toLocaleString("en-US"),
+                        this.rect.x + popup.pos.x * size, 
+                        this.rect.y + (popup.pos.y - (popup.time ?? 0)) * size, 
+                    );
+                    popup.time = (popup.time ?? 0) + delta / 2000
+                }
+                ctx.globalAlpha = 1;
 
                 ctx.fillStyle = "#ffffff";
                 ctx.strokeStyle = "#000000";
                 ctx.font = "bold " + 50 * scale + "px Arial";
                 ctx.lineWidth = 10 * scale;
+                let scoreDisp = this.score - BigInt(Math.round(this.lerpScore));
                 ctx.strokeText(
-                    this.score.toLocaleString("en-US"),
+                    scoreDisp.toLocaleString("en-US"),
                     this.rect.x + this.rect.width / 2, 
-                    this.rect.y - 30 * scale, 
+                    this.rect.y - 40 * scale, 
                 );
                 ctx.fillText(
-                    this.score.toLocaleString("en-US"),
+                    scoreDisp.toLocaleString("en-US"),
                     this.rect.x + this.rect.width / 2, 
-                    this.rect.y - 30 * scale, 
+                    this.rect.y - 40 * scale, 
                 );
 
-                if (this.moves.count == 0) {
+                if (this.moves.count == 0 && this.matches.count == 0) {
                     ctx.fillStyle = "#ffffff";
                     ctx.strokeStyle = "#000000";
                     ctx.font = "bold " + 70 * scale + "px Arial";
                     ctx.lineWidth = 10 * scale;
                     ctx.strokeText(
-                        "NO MORE MOVES LOL",
+                        "NO MORE\nMOVES LOL",
                         this.rect.x + this.rect.width / 2, 
                         this.rect.y + this.rect.height / 2, 
                     );
                     ctx.fillText(
-                        "NO MORE MOVES LOL",
+                        "NO MORE\nMOVES LOL",
                         this.rect.x + this.rect.width / 2, 
                         this.rect.y + this.rect.height / 2, 
                     );
