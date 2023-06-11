@@ -253,6 +253,8 @@ let controls = {
             lerpScore: 0,
             cascade: 0,
             scorePopups: [],
+
+            __mouseActive: false,
             onupdate() {
                 
                 let matched = false;
@@ -352,34 +354,75 @@ let controls = {
                 }
                 this.fallCount = fallCount;
             },
+            makeMatch(oldPos, newPos) {
+                let oldTile = this.board.tiles[oldPos];
+                let newTile = this.board.tiles[newPos];
+                if (!oldTile || oldTile.offset.y || oldTile.fade || !newTile || newTile.offset.y || newTile.fade) return;
+                let swap = () => {
+                    [this.board.tiles[newPos], this.board.tiles[oldPos]] = 
+                        [this.board.tiles[oldPos], this.board.tiles[newPos]];
+                }
+                swap();
+                let matches = this.board.findMatches();
+                if (matches.count > this.matches.count) {
+                    this.cascade = 0;
+                    this.matches = matches;
+                } else swap();
+            },
             onpointerdown(e) {
                 let size = Math.min(this.rect.width / this.board.width, this.rect.height / this.board.height);
                 let pos = {
                     x: Math.floor((e.x - this.rect.x) / size),
                     y: Math.floor((e.y - this.rect.y) / size),
                 }
-                if (this.swapPos && Math.abs(pos.x - this.swapPos.x) + Math.abs(pos.y - this.swapPos.y) == 1) {
-                    let oldPos = this.swapPos.x + this.swapPos.y * 100;
-                    let newPos = pos.x + pos.y * 100;
-                    let oldTile = this.board.tiles[newPos];
-                    let newTile = this.board.tiles[newPos];
-                    if (!oldTile || oldTile.offset.y || oldTile.fade || !newTile || newTile.offset.y || newTile.fade) return;
-                    let swap = () => {
-                        [this.board.tiles[newPos], this.board.tiles[oldPos]] = 
-                            [this.board.tiles[oldPos], this.board.tiles[newPos]];
+                
+                if (this.swapPos) {
+                    if (Math.abs(pos.x - this.swapPos.x) + Math.abs(pos.y - this.swapPos.y) == 1) {
+                        let oldPos = this.swapPos.x + this.swapPos.y * 100;
+                        let newPos = pos.x + pos.y * 100;
+                        this.makeMatch(oldPos, newPos);
+                        this.swapPos = null;
+                    } else if (Math.abs(pos.x - this.swapPos.x) + Math.abs(pos.y - this.swapPos.y) == 0) {
+                        this.swapPos = null;
+                    } else {
+                        this.swapPos = pos;
                     }
-                    swap();
-                    let matches = this.board.findMatches();
-                    console.log(matches);
-                    if (matches.count > this.matches.count) {
-                        this.cascade = 0;
-                        this.matches = matches;
-                    } else swap();
-                    this.swapPos = null;
                 } else {
                     this.swapPos = pos;
                 }
-                console.log(pos);
+                this.__mouseActive = true;
+                let handler = (e) => {
+                    this.__mouseActive = false;
+                    document.removeEventListener("pointerup", handler);
+                }
+                document.addEventListener("pointerup", handler);
+            },
+            onpointermove(e) {
+                let size = Math.min(this.rect.width / this.board.width, this.rect.height / this.board.height);
+                let pos = {
+                    x: Math.floor((e.x - this.rect.x) / size),
+                    y: Math.floor((e.y - this.rect.y) / size),
+                }
+                if (this.__mouseActive && this.swapPos && Math.abs(pos.x - this.swapPos.x) + Math.abs(pos.y - this.swapPos.y) == 1) {
+                    let oldPos = this.swapPos.x + this.swapPos.y * 100;
+                    let newPos = pos.x + pos.y * 100;
+                    this.makeMatch(oldPos, newPos);
+                    this.swapPos = null;
+                } 
+            },
+            onpointerup(e) {
+                let size = Math.min(this.rect.width / this.board.width, this.rect.height / this.board.height);
+                let pos = {
+                    x: Math.floor((e.x - this.rect.x) / size),
+                    y: Math.floor((e.y - this.rect.y) / size),
+                }
+                if (this.swapPos) {
+                    if (Math.abs(pos.x - this.swapPos.x) + Math.abs(pos.y - this.swapPos.y) == 1) {
+                        let oldPos = this.swapPos.x + this.swapPos.y * 100;
+                        let newPos = pos.x + pos.y * 100;
+                        this.makeMatch(oldPos, newPos);
+                    }
+                }
             },
             render() {
                 let size = Math.min(this.rect.width / this.board.width, this.rect.height / this.board.height);
@@ -449,6 +492,16 @@ let controls = {
                             this.rect.y + size * (y - tile.offset.y + .5), 
                         );
                     }
+                }
+
+                if (this.swapPos) {
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.strokeRect(
+                        this.rect.x + size * (this.swapPos.x), 
+                        this.rect.y + size * (this.swapPos.y), 
+                        size, 
+                        size, 
+                    );
                 }
                 
                 ctx.fillStyle = "#000000";
