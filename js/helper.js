@@ -22,7 +22,7 @@ function Board(args = {}) {
                 let cy = this.height - 1;
                 for (let y = cy; y >= 0; y--) {
                     if (this.tiles[x + y * 100]) {
-                        if (this.tiles[x + y * 100].fade) {
+                        if (this.tiles[x + y * 100].anim || this.tiles[x + y * 100].swapCheck !== undefined) {
                             cy = y - 1;
                         } else {
                             if (y != cy) {
@@ -50,7 +50,7 @@ function Board(args = {}) {
                 }
             }
 
-            while (this.findValidMoves().count == 0) {
+            if (fills.length > 0) while (this.findValidMoves().count == 0) {
                 for (let tile of fills) {
                     this.tiles[tile].type = Math.floor(Math.random() * this.types);
                 }
@@ -60,7 +60,7 @@ function Board(args = {}) {
             let hozTiles = {}, vetTiles = {}, matches = { count: 0 };
             for (let x = 0; x < this.width; x++) {
                 for (let y = 0; y < this.height; y++) {
-                    if (hozTiles[x + y * 100] === undefined) {
+                    if (hozTiles[x + y * 100] === undefined && x < this.width - 2) {
                         let hoz = 1;
                         for (hoz; hoz < this.width - x; hoz++) {
                             if (this.get(x, y)?.type == this.get(x + hoz, y)?.type) {
@@ -77,25 +77,22 @@ function Board(args = {}) {
                             matches.count++;
                         }
                     }
-                    if (vetTiles[x + y * 100] === undefined) {
+                    if (vetTiles[x + y * 100] === undefined && y < this.height - 2) {
                         let vet = 1;
-                        let hozIndex = null;
+                        let hozIndex = x + y * 100;
                         for (vet; vet < this.height - y; vet++) {
                             if (this.get(x, y)?.type == this.get(x, y + vet)?.type) {
                                 let ind = x + (y + vet) * 100
                                 vetTiles[ind] = x + y * 100;
-                                if (hozTiles[ind] != null) hozIndex = hozTiles[ind]
+                                if (hozTiles[ind] !== undefined) hozIndex = hozTiles[ind]
                             } else {
                                 break;
                             }
                         }
                         if (vet >= 3) {
-                            if (hozIndex != null && !matches[hozIndex]?.vetLength) {
-                                matches[hozIndex] = {
-                                    ...matches[hozIndex],
-                                    vetStart: x + y * 100,
-                                    vetLength: vet,
-                                }
+                            if (matches[hozIndex] && !matches[hozIndex].vetLength) {
+                                matches[hozIndex].vetStart = x + y * 100;
+                                matches[hozIndex].vetLength = vet;
                                 matches.count++;
                             } else {
                                 matches[x + y * 100] = {

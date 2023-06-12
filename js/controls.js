@@ -270,6 +270,10 @@ let controls = {
                             let tile = this.board.tiles[match.hozStart + c];
                             matchable &&= tile && !tile.offset.y && !tile.animTime;
                             tiles[match.hozStart + c] = (tiles[match.hozStart + c] ?? 0) + 1;
+                            if (tile && tile.swapCheck !== undefined) {
+                                this.cascade = 0;
+                                delete tile.swapCheck;
+                            }
                         }
                     }
                     if (match.vetLength) {
@@ -277,6 +281,10 @@ let controls = {
                             let tile = this.board.tiles[match.vetStart + c * 100];
                             matchable &&= tile && !tile.offset.y && !tile.animTime;
                             tiles[match.vetStart + c * 100] = (tiles[match.vetStart + c * 100] ?? 0) + 1;
+                            if (tile && tile.swapCheck !== undefined) {
+                                this.cascade = 0;
+                                delete tile.swapCheck;
+                            }
                         }
                     }
                     if (matchable) {
@@ -324,13 +332,51 @@ let controls = {
                 this.lerpScore *= 0.01 ** (delta / 1000);
 
                 let fallCount = 0;
+                let swaps = {};
                 for (let id of Object.keys(this.board.tiles).reverse()) {
                     let tile = this.board.tiles[id];
                     if (!tile) continue;
+
+                    if (tile.swapCheck !== undefined) {
+                        if (this.board.tiles[tile.swapCheck]?.swapCheck == id) {
+                            let swap = this.board.tiles[tile.swapCheck];
+                            tile.anim = "swap";
+                            tile.animTime = 1e-6;
+                            tile.animArgs = { 
+                                revert: true,
+                                offset: { 
+                                    x: (tile.swapCheck % 100) - (id % 100), 
+                                    y: Math.floor(tile.swapCheck / 100) - Math.floor(id / 100), 
+                                }
+                            };
+                            swap.anim = "swap";
+                            swap.animTime = 1e-6;
+                            swap.animArgs = { 
+                                revert: true,
+                                offset: { 
+                                    x: (id % 100) - (tile.swapCheck % 100), 
+                                    y: Math.floor(id / 100) - Math.floor(tile.swapCheck / 100), 
+                                }
+                            };
+                            delete this.board.tiles[tile.swapCheck].swapCheck;
+                        }
+                        delete this.board.tiles[id].swapCheck;
+                    } 
+                    
                     if (tile.anim == "fade") {
                         tile.animTime += delta / (tile.animArgs.manual ? 250 : 500);
                         if (tile.animTime > 1) {
                             this.board.tiles[id] = null;
+                            matched = true;
+                        }
+                    } else if (tile.anim == "swap") {
+                        tile.animTime += delta / 250;
+                        if (tile.animTime > 1) {
+                            swaps[+id + tile.animArgs.offset.x + tile.animArgs.offset.y * 100] = tile;
+                            if (!tile.animArgs.revert) tile.swapCheck = id;
+                            delete tile.anim;
+                            delete tile.animTime;
+                            delete tile.animArgs;
                             matched = true;
                         }
                     } else if (tile.offset.y > 0 || tile.velocity.y != 0) {
@@ -345,6 +391,11 @@ let controls = {
                         fallCount ++;
                     }
                 }
+;
+                for (let id in swaps) {
+                    console.log(swaps, id);
+                    this.board.tiles[id] = swaps[id];
+                }
 
                 if (matched) {
                     this.board.refill();
@@ -354,22 +405,20 @@ let controls = {
                 if (fallCount == 0 && this.fallCount != 0) {
                     this.moves = this.board.findValidMoves();
                 }
+
                 this.fallCount = fallCount;
             },
             makeMatch(oldPos, newPos) {
-                let oldTile = this.board.tiles[oldPos];
-                let newTile = this.board.tiles[newPos];
-                if (!oldTile || oldTile.offset.y || oldTile.animTime || !newTile || newTile.offset.y || newTile.animTime) return;
-                let swap = () => {
-                    [this.board.tiles[newPos], this.board.tiles[oldPos]] = 
-                        [this.board.tiles[oldPos], this.board.tiles[newPos]];
-                }
-                swap();
-                let matches = this.board.findMatches();
-                if (matches.count > this.matches.count) {
-                    this.cascade = 0;
-                    this.matches = matches;
-                } else swap();
+                let oldTile = this.board.tiles[oldPos.x + oldPos.y * 100];
+                let newTile = this.board.tiles[newPos.x + newPos.y * 100];
+                if (!oldTile || oldTile.offset.y || oldTile.anim || !newTile || newTile.offset.y || newTile.anim) return;
+                
+                oldTile.anim = "swap";
+                oldTile.animTime = 1e-6;
+                oldTile.animArgs = { offset: { x: newPos.x - oldPos.x, y: newPos.y - oldPos.y } };
+                newTile.anim = "swap";
+                newTile.animTime = 1e-6;
+                newTile.animArgs = { offset: { x: -oldTile.animArgs.offset.x, y: -oldTile.animArgs.offset.y } };
             },
             onpointerdown(e) {
                 let size = Math.min(this.rect.width / this.board.width, this.rect.height / this.board.height);
@@ -380,9 +429,7 @@ let controls = {
                 
                 if (this.swapPos) {
                     if (Math.abs(pos.x - this.swapPos.x) + Math.abs(pos.y - this.swapPos.y) == 1) {
-                        let oldPos = this.swapPos.x + this.swapPos.y * 100;
-                        let newPos = pos.x + pos.y * 100;
-                        this.makeMatch(oldPos, newPos);
+                        this.makeMatch(this.swapPos, pos);
                         this.swapPos = null;
                     } else if (Math.abs(pos.x - this.swapPos.x) + Math.abs(pos.y - this.swapPos.y) == 0) {
                         this.swapPos = null;
@@ -406,9 +453,7 @@ let controls = {
                     y: Math.floor((e.y - this.rect.y) / size),
                 }
                 if (this.__mouseActive && this.swapPos && Math.abs(pos.x - this.swapPos.x) + Math.abs(pos.y - this.swapPos.y) == 1) {
-                    let oldPos = this.swapPos.x + this.swapPos.y * 100;
-                    let newPos = pos.x + pos.y * 100;
-                    this.makeMatch(oldPos, newPos);
+                    this.makeMatch(this.swapPos, pos);
                     this.swapPos = null;
                 } 
             },
@@ -420,9 +465,7 @@ let controls = {
                 }
                 if (this.swapPos) {
                     if (Math.abs(pos.x - this.swapPos.x) + Math.abs(pos.y - this.swapPos.y) == 1) {
-                        let oldPos = this.swapPos.x + this.swapPos.y * 100;
-                        let newPos = pos.x + pos.y * 100;
-                        this.makeMatch(oldPos, newPos);
+                        this.makeMatch(this.swapPos, pos);
                     }
                 }
             },
@@ -462,19 +505,31 @@ let controls = {
                         if (!tile) continue;
                         let fade = tile.anim == "fade" ? tile.animTime : 0;
                         let tScale = (1 - ease(fade)) * .8;
+                        let offset = {
+                            x: tile.offset.x,
+                            y: tile.offset.y
+                        }
+
+                        if (tile.anim == "swap") {
+                            let lerp = 0.5 - Math.cos(tile.animTime * Math.PI) / 2;
+                            console.log(tile.animTime, lerp);
+                            offset.x += tile.animArgs.offset.x * lerp;
+                            offset.y -= tile.animArgs.offset.y * lerp;
+                            tScale *= 0.8 ** ((offset.x + offset.y) * Math.sin(tile.animTime * Math.PI));
+                        }
 
                         ctx.fillStyle = fade ? "#ffffff" : "#000000";
                         ctx.fillRect(
-                            this.rect.x + size * (x + tile.offset.x + .525 - tScale / 2), 
-                            this.rect.y + size * (y - tile.offset.y + .525 - tScale / 2), 
+                            this.rect.x + size * (x + offset.x + .525 - tScale / 2), 
+                            this.rect.y + size * (y - offset.y + .525 - tScale / 2), 
                             size * tScale, 
                             size * tScale, 
                         );
 
                         ctx.fillStyle = fade ? "#000000" : colors[tile.type];
                         ctx.fillRect(
-                            this.rect.x + size * (x + tile.offset.x + .5 - tScale / 2), 
-                            this.rect.y + size * (y - tile.offset.y + .5 - tScale / 2), 
+                            this.rect.x + size * (x + offset.x + .5 - tScale / 2), 
+                            this.rect.y + size * (y - offset.y + .5 - tScale / 2), 
                             size * tScale, 
                             size * tScale, 
                         );
@@ -485,13 +540,13 @@ let controls = {
                         ctx.lineWidth = 6 * scale * tScale;
                         ctx.strokeText(
                             tile.type,
-                            this.rect.x + size * (x + tile.offset.x + .5), 
-                            this.rect.y + size * (y - tile.offset.y + .5), 
+                            this.rect.x + size * (x + offset.x + .5), 
+                            this.rect.y + size * (y - offset.y + .5), 
                         );
                         ctx.fillText(
                             tile.type,
-                            this.rect.x + size * (x + tile.offset.x + .5), 
-                            this.rect.y + size * (y - tile.offset.y + .5), 
+                            this.rect.x + size * (x + offset.x + .5), 
+                            this.rect.y + size * (y - offset.y + .5), 
                         );
                     }
                 }
@@ -526,7 +581,7 @@ let controls = {
                     let tScale = ease(Math.min(popup.time ?? 0, 1)) * scale;
                     ctx.globalAlpha = Math.min(2 - popup.time * 2, 1);
                     ctx.font = "bold " + 40 * tScale + "px Arial";
-                    ctx.strokeStyle = colors[popup.color];
+                    ctx.strokeStyle = colors[popup.color] + "77";
                     ctx.lineWidth = 10 * tScale;
                     ctx.strokeText(
                         popup.score.toLocaleString("en-US"),
@@ -560,6 +615,15 @@ let controls = {
                     this.rect.x + this.rect.width - 25 * scale, 
                     this.rect.y - 40 * scale, 
                 );
+                ctx.globalAlpha = Math.min(this.lerpScore / 20, 0.5);
+                ctx.strokeStyle = "#ffffff";
+                ctx.lineWidth = 4 * scale;
+                ctx.strokeText(
+                    scoreDisp.toLocaleString("en-US"),
+                    this.rect.x + this.rect.width - 25 * scale, 
+                    this.rect.y - 40 * scale, 
+                );
+                ctx.globalAlpha = 1
                 ctx.fillText(
                     scoreDisp.toLocaleString("en-US"),
                     this.rect.x + this.rect.width - 25 * scale, 
