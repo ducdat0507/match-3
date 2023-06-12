@@ -74,6 +74,19 @@ let controls = {
             ...args
         }
     },
+    button(args) {
+        return {
+            ...controls.rect(),
+
+            onpointerup() {
+                this.onclick();
+            },
+
+            onclick() {},
+
+            ...args
+        }
+    },
     label(args) {
         return {
             ...controls.base(),
@@ -88,7 +101,7 @@ let controls = {
             render() {
                 ctx.fillStyle = this.fill;
                 ctx.textAlign = this.align;
-                ctx.textBaseline = "top";
+                ctx.textBaseline = "middle";
                 ctx.font = this.style + " " + (this.scale * scale) + "px " + this.font;
                 if (this.wrap) {
                     let words = this.text.split(" ");
@@ -253,6 +266,8 @@ let controls = {
             lerpScore: 0,
             cascade: 0,
             scorePopups: [],
+            hint: null,
+            hintCooldown: 0,
 
             __mouseActive: false,
             onupdate() {
@@ -406,7 +421,12 @@ let controls = {
                     this.moves = this.board.findValidMoves();
                 }
 
+                if (fallCount > 0) {
+                    this.hint = null;
+                }
+
                 this.fallCount = fallCount;
+                this.hintCooldown -= delta;
             },
             makeMatch(oldPos, newPos) {
                 let oldTile = this.board.tiles[oldPos.x + oldPos.y * 100];
@@ -419,6 +439,22 @@ let controls = {
                 newTile.anim = "swap";
                 newTile.animTime = 1e-6;
                 newTile.animArgs = { offset: { x: -oldTile.animArgs.offset.x, y: -oldTile.animArgs.offset.y } };
+            },
+            showHint() {
+                if (this.fallCount || this.hintCooldown > 0) return;
+                let list = Object.keys(this.moves);
+                list.splice(list.indexOf("count"), 1);
+                let chosen = list[Math.floor(Math.random() * list.length)];
+                this.hint = {
+                    x: chosen % 100,
+                    y: Math.floor(chosen / 100),
+                    time: 0,
+                    type: this.moves[chosen].vet ? (
+                        this.moves[chosen].hoz ? ["vet", "hoz"][Math.floor(Math.random() * 2)] : "vet"
+                    ) : "hoz"
+                }
+                console.log(list, chosen, this.hint);
+                this.hintCooldown = 5000;
             },
             onpointerdown(e) {
                 let size = Math.min(this.rect.width / this.board.width, this.rect.height / this.board.height);
@@ -445,6 +481,7 @@ let controls = {
                     document.removeEventListener("pointerup", handler);
                 }
                 document.addEventListener("pointerup", handler);
+                this.hint = null;
             },
             onpointermove(e) {
                 let size = Math.min(this.rect.width / this.board.width, this.rect.height / this.board.height);
@@ -549,6 +586,21 @@ let controls = {
                             this.rect.y + size * (y - offset.y + .5), 
                         );
                     }
+                }
+
+                if (this.hint) {
+                    this.hint.time += delta;
+                    ctx.globalAlpha = 0.5 + Math.sin(time / 50) / 2;
+                    ctx.strokeStyle = "white";
+                    ctx.lineWidth = 2 * scale;
+                    let margin = Math.max(500 - this.hint.time, 0) * scale;
+                    ctx.strokeRect(
+                        this.rect.x + size * this.hint.x - margin, 
+                        this.rect.y + size * this.hint.y - margin, 
+                        size * (this.hint.type == "hoz" ? 2 : 1) + margin * 2, 
+                        size * (this.hint.type == "vet" ? 2 : 1) + margin * 2,  
+                    );
+                    ctx.globalAlpha = 1;
                 }
 
                 if (this.swapPos) {
