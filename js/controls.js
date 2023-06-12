@@ -268,14 +268,14 @@ let controls = {
                     if (match.hozLength) {
                         for (let c = 0; c - match.hozLength; c++) {
                             let tile = this.board.tiles[match.hozStart + c];
-                            matchable &&= tile && !tile.offset.y && !tile.fade;
+                            matchable &&= tile && !tile.offset.y && !tile.animTime;
                             tiles[match.hozStart + c] = (tiles[match.hozStart + c] ?? 0) + 1;
                         }
                     }
                     if (match.vetLength) {
                         for (let c = 0; c - match.vetLength; c++) {
                             let tile = this.board.tiles[match.vetStart + c * 100];
-                            matchable &&= tile && !tile.offset.y && !tile.fade;
+                            matchable &&= tile && !tile.offset.y && !tile.animTime;
                             tiles[match.vetStart + c * 100] = (tiles[match.vetStart + c * 100] ?? 0) + 1;
                         }
                     }
@@ -303,8 +303,10 @@ let controls = {
                 }
                 
                 for (let tile in matchTiles) {
-                    if (!this.board.tiles[tile].fade) {
-                        this.board.tiles[tile].fade = 1e-6;
+                    if (!this.board.tiles[tile].anim != "fade") {
+                        this.board.tiles[tile].anim = "fade";
+                        this.board.tiles[tile].animTime = 1e-6;
+                        this.board.tiles[tile].animArgs = { manual: this.cascade <= 0 };
                     }
                 }
                 
@@ -322,20 +324,20 @@ let controls = {
                 this.lerpScore *= 0.01 ** (delta / 1000);
 
                 let fallCount = 0;
-                for (let id in this.board.tiles) {
+                for (let id of Object.keys(this.board.tiles).reverse()) {
                     let tile = this.board.tiles[id];
                     if (!tile) continue;
-                    if (tile.fade) {
-                        tile.fade += delta / 500;
-                        if (tile.fade > 1) {
+                    if (tile.anim == "fade") {
+                        tile.animTime += delta / (tile.animArgs.manual ? 250 : 500);
+                        if (tile.animTime > 1) {
                             this.board.tiles[id] = null;
                             matched = true;
                         }
-                    } else if (tile.offset.y > 0) {
+                    } else if (tile.offset.y > 0 || tile.velocity.y != 0) {
                         let limit = 0;
                         let count = 1;
-                        while (count * 100 + id < this.board.height * 100) {
-                            limit = Math.max((this.board.tiles[count * 100 + id]?.offset.y ?? 0) - count + 1, limit);
+                        while (count * 100 + +id < this.board.height * 100) {
+                            limit = Math.max((this.board.tiles[count * 100 + id]?.offset.y || 0), limit);
                             count++;
                         }
                         tile.offset.y = Math.max(tile.offset.y + tile.velocity.y * delta / 1000, limit);
@@ -357,7 +359,7 @@ let controls = {
             makeMatch(oldPos, newPos) {
                 let oldTile = this.board.tiles[oldPos];
                 let newTile = this.board.tiles[newPos];
-                if (!oldTile || oldTile.offset.y || oldTile.fade || !newTile || newTile.offset.y || newTile.fade) return;
+                if (!oldTile || oldTile.offset.y || oldTile.animTime || !newTile || newTile.offset.y || newTile.animTime) return;
                 let swap = () => {
                     [this.board.tiles[newPos], this.board.tiles[oldPos]] = 
                         [this.board.tiles[oldPos], this.board.tiles[newPos]];
@@ -441,7 +443,6 @@ let controls = {
                     }
                 }
 
-                // Tiles
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
                 ctx.font = 32 * scale + "px Arial";
@@ -454,14 +455,15 @@ let controls = {
                     return c3 * x * x * x - c1 * x * x;
                 }
 
+                // Tiles
                 for (let x = 0; x < this.board.width; x++) {
                     for (let y = this.board.height - 1; y >= 0; y--) {
                         let tile = this.board.tiles[x + y * 100];
                         if (!tile) continue;
+                        let fade = tile.anim == "fade" ? tile.animTime : 0;
+                        let tScale = (1 - ease(fade)) * .8;
 
-                        let tScale = (1 - ease(tile.fade ?? 0)) * .8;
-
-                        ctx.fillStyle = tile.fade ? "#ffffff" : "#000000";
+                        ctx.fillStyle = fade ? "#ffffff" : "#000000";
                         ctx.fillRect(
                             this.rect.x + size * (x + tile.offset.x + .525 - tScale / 2), 
                             this.rect.y + size * (y - tile.offset.y + .525 - tScale / 2), 
@@ -469,7 +471,7 @@ let controls = {
                             size * tScale, 
                         );
 
-                        ctx.fillStyle = tile.fade ? "#000000" : colors[tile.type];
+                        ctx.fillStyle = fade ? "#000000" : colors[tile.type];
                         ctx.fillRect(
                             this.rect.x + size * (x + tile.offset.x + .5 - tScale / 2), 
                             this.rect.y + size * (y - tile.offset.y + .5 - tScale / 2), 
@@ -477,8 +479,8 @@ let controls = {
                             size * tScale, 
                         );
 
-                        ctx.fillStyle = tile.fade ? "#000000" : "#ffffff";
-                        ctx.strokeStyle = tile.fade ? "#ffffff" : "#000000";
+                        ctx.fillStyle = fade ? "#000000" : "#ffffff";
+                        ctx.strokeStyle = fade ? "#ffffff" : "#000000";
                         ctx.font = 40 * scale * tScale + "px Arial";
                         ctx.lineWidth = 6 * scale * tScale;
                         ctx.strokeText(
@@ -495,23 +497,34 @@ let controls = {
                 }
 
                 if (this.swapPos) {
-                    ctx.strokeStyle = "#ffffff";
+                    ctx.strokeStyle = "#aaaaaa";
+                    ctx.lineWidth = 4 * scale;
                     ctx.strokeRect(
-                        this.rect.x + size * (this.swapPos.x), 
-                        this.rect.y + size * (this.swapPos.y), 
-                        size, 
-                        size, 
+                        this.rect.x + size * (this.swapPos.x) + 2 * scale, 
+                        this.rect.y + size * (this.swapPos.y) + 2 * scale, 
+                        size - 4 * scale, 
+                        size - 4 * scale, 
                     );
                 }
                 
                 ctx.fillStyle = "#000000";
+
+                ease = (x) => {
+                    const c4 = (2 * Math.PI) / 3;
+                    
+                    return x === 0
+                        ? 0
+                        : x === 1
+                        ? 1
+                        : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1;
+                }
                 
                 while (this.scorePopups.length > 0 && this.scorePopups[0].time >= 1) {
                     this.scorePopups.shift();
                 }
                 for (let popup of this.scorePopups) {
-                    let tScale = (1 - ease(1 - Math.min(popup.time * 4 ?? 0, 1))) ** 3 * scale;
-                    ctx.globalAlpha = 1 - popup.time;
+                    let tScale = ease(Math.min(popup.time ?? 0, 1)) * scale;
+                    ctx.globalAlpha = Math.min(2 - popup.time * 2, 1);
                     ctx.font = "bold " + 40 * tScale + "px Arial";
                     ctx.strokeStyle = colors[popup.color];
                     ctx.lineWidth = 10 * tScale;
@@ -539,20 +552,21 @@ let controls = {
                 ctx.fillStyle = "#ffffff";
                 ctx.strokeStyle = "#000000";
                 ctx.font = "bold " + 50 * scale + "px Arial";
-                ctx.lineWidth = 10 * scale;
+                ctx.lineWidth = 8 * scale;
+                ctx.textAlign = "right";
                 let scoreDisp = this.score - BigInt(Math.round(this.lerpScore));
                 ctx.strokeText(
                     scoreDisp.toLocaleString("en-US"),
-                    this.rect.x + this.rect.width / 2, 
+                    this.rect.x + this.rect.width - 25 * scale, 
                     this.rect.y - 40 * scale, 
                 );
                 ctx.fillText(
                     scoreDisp.toLocaleString("en-US"),
-                    this.rect.x + this.rect.width / 2, 
+                    this.rect.x + this.rect.width - 25 * scale, 
                     this.rect.y - 40 * scale, 
                 );
 
-                if (this.moves.count == 0 && this.matches.count == 0) {
+                if (this.moves.count == 0 && this.matches.count == 0 && this.fallCount == 0) {
                     ctx.fillStyle = "#ffffff";
                     ctx.strokeStyle = "#000000";
                     ctx.font = "bold " + 70 * scale + "px Arial";

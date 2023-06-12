@@ -27,7 +27,6 @@ function Board(args = {}) {
                         } else {
                             if (y != cy) {
                                 this.tiles[x + cy * 100] = this.tiles[x + y * 100];
-                                console.log(this.tiles[x + cy * 100]);
                                 this.tiles[x + cy * 100].offset.y += cy - y;
                                 this.tiles[x + y * 100] = null;
                             }
@@ -61,7 +60,7 @@ function Board(args = {}) {
             let hozTiles = {}, vetTiles = {}, matches = { count: 0 };
             for (let x = 0; x < this.width; x++) {
                 for (let y = 0; y < this.height; y++) {
-                    if (!hozTiles[x + y * 100]) {
+                    if (hozTiles[x + y * 100] === undefined) {
                         let hoz = 1;
                         for (hoz; hoz < this.width - x; hoz++) {
                             if (this.get(x, y)?.type == this.get(x + hoz, y)?.type) {
@@ -78,7 +77,7 @@ function Board(args = {}) {
                             matches.count++;
                         }
                     }
-                    if (!vetTiles[x + y * 100]) {
+                    if (vetTiles[x + y * 100] === undefined) {
                         let vet = 1;
                         let hozIndex = null;
                         for (vet; vet < this.height - y; vet++) {
@@ -109,6 +108,7 @@ function Board(args = {}) {
                     }
                 }
             }
+            console.log(matches);
             return matches;
         },
         findValidMoves() {
