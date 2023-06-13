@@ -265,6 +265,7 @@ let controls = {
             score: 0n,
             lerpScore: 0,
             cascade: 0,
+            powerCascade: 0,
             scorePopups: [],
             hint: null,
             hintCooldown: 0,
@@ -275,6 +276,7 @@ let controls = {
                 let matched = false;
                 let matchScores = [];
                 let matchTiles = {};
+                let powerScores = [];
                 for (let id in this.matches) {
                     if (id == "count") continue;
                     let match = this.matches[id];
@@ -286,7 +288,7 @@ let controls = {
                             matchable &&= tile && !tile.offset.y && !tile.animTime;
                             tiles[match.hozStart + c] = (tiles[match.hozStart + c] ?? 0) + 1;
                             if (tile && tile.swapCheck !== undefined) {
-                                this.cascade = 0;
+                                this.cascade = this.powerCascade = 0;
                                 delete tile.swapCheck;
                             }
                         }
@@ -297,7 +299,7 @@ let controls = {
                             matchable &&= tile && !tile.offset.y && !tile.animTime;
                             tiles[match.vetStart + c * 100] = (tiles[match.vetStart + c * 100] ?? 0) + 1;
                             if (tile && tile.swapCheck !== undefined) {
-                                this.cascade = 0;
+                                this.cascade = this.powerCascade = 0;
                                 delete tile.swapCheck;
                             }
                         }
@@ -320,16 +322,48 @@ let controls = {
                             score: 50n * 3n ** BigInt(match.vetLength - 3)
                         });
                         for (let tile in tiles) {
-                            matchTiles[tile] = (matchTiles[tile] ?? 0) + tiles[tiles];
+                            matchTiles[tile] = (matchTiles[tile] ?? 0) + tiles[tile];
                         }
                     }
                 }
                 
                 for (let tile in matchTiles) {
-                    if (!this.board.tiles[tile].anim != "fade") {
-                        this.board.tiles[tile].anim = "fade";
-                        this.board.tiles[tile].animTime = 1e-6;
-                        this.board.tiles[tile].animArgs = { manual: this.cascade <= 0 };
+                    if (matchTiles[tile] >= 2) {
+                        this.board.tiles[tile].power = "star";
+                    } else {
+                        if (this.board.tiles[tile].power == "star") {
+                            let [x, y] = [
+                                tile % 100,
+                                Math.floor(tile / 100) + Math.round(this.board.tiles[tile].offset.y),
+                            ]
+                            for (let tid in this.board.tiles) {
+                                let tTile = this.board.tiles[tid];
+                                if (tid == tile || !tTile) continue;
+                                let [px, py] = [
+                                    tid % 100,
+                                    Math.floor(tid / 100) + Math.round(tTile.offset.y),
+                                ]
+                                console.log(tid, x, y, px, py)
+                                if ((x == px || y == py) && (!tTile.anim || tTile.anim == "fade")) {
+                                    tTile.anim = "power-fade";
+                                    tTile.animTime = 1 - (Math.abs(x - px) + Math.abs(y - py)) / 5;
+                                    tTile.animArgs = { manual: false };
+                                    powerScores.push({
+                                        pos: {
+                                            x: px + .5,
+                                            y: py + .5,
+                                        },
+                                        color: tTile.type,
+                                        score: 20n
+                                    })
+                                }
+                            }
+                        }
+                        if (!["fade", "power-fade"].includes(this.board.tiles[tile].anim)) {
+                            this.board.tiles[tile].anim = "fade";
+                            this.board.tiles[tile].animTime = 1e-6;
+                            this.board.tiles[tile].animArgs = { manual: this.cascade <= 0 };
+                        }
                     }
                 }
                 
@@ -341,6 +375,17 @@ let controls = {
                         this.score += matchScores[id].score;
                         this.lerpScore += Number(matchScores[id].score);
                         this.scorePopups.push(matchScores[id]);
+                    }
+                }
+                
+                if (powerScores.length > 0) {
+                    for (let id in powerScores) {
+                        this.powerCascade++;
+                        powerScores[id].score += BigInt(this.powerCascade);
+                        powerScores[id].type = "power";
+                        this.score += powerScores[id].score;
+                        this.lerpScore += Number(powerScores[id].score);
+                        this.scorePopups.push(powerScores[id]);
                     }
                 }
 
@@ -380,6 +425,12 @@ let controls = {
                     
                     if (tile.anim == "fade") {
                         tile.animTime += delta / (tile.animArgs.manual ? 250 : 500);
+                        if (tile.animTime > 1) {
+                            this.board.tiles[id] = null;
+                            matched = true;
+                        }
+                    } else if (tile.anim == "power-fade") {
+                        tile.animTime += delta / 500;
                         if (tile.animTime > 1) {
                             this.board.tiles[id] = null;
                             matched = true;
@@ -431,7 +482,10 @@ let controls = {
             makeMatch(oldPos, newPos) {
                 let oldTile = this.board.tiles[oldPos.x + oldPos.y * 100];
                 let newTile = this.board.tiles[newPos.x + newPos.y * 100];
-                if (!oldTile || oldTile.offset.y || oldTile.anim || !newTile || newTile.offset.y || newTile.anim) return;
+                if (
+                    !oldTile || oldTile.offset.y || oldTile.anim || oldTile.swapCheck ||
+                    !newTile || newTile.offset.y || newTile.anim || newTile.swapCheck
+                ) return;
                 
                 oldTile.anim = "swap";
                 oldTile.animTime = 1e-6;
@@ -540,8 +594,8 @@ let controls = {
                     for (let y = this.board.height - 1; y >= 0; y--) {
                         let tile = this.board.tiles[x + y * 100];
                         if (!tile) continue;
-                        let fade = tile.anim == "fade" ? tile.animTime : 0;
-                        let tScale = (1 - ease(fade)) * .8;
+                        let fade = ["fade", "power-fade"].includes(tile.anim) ? tile.animTime : 0;
+                        let tScale = (fade <= 0 ? 1 : 1 - ease(fade)) * .8;
                         let offset = {
                             x: tile.offset.x,
                             y: tile.offset.y
@@ -570,6 +624,16 @@ let controls = {
                             size * tScale, 
                             size * tScale, 
                         );
+                        
+                        ctx.fillStyle = fade ? "#000000" : "#ffffff";
+                        ctx.font = 80 * scale * tScale + "px Arial";
+                        if (tile.power == "star") {
+                            ctx.fillText(
+                                "S",
+                                this.rect.x + size * (x + offset.x + .5), 
+                                this.rect.y + size * (y - offset.y + .5), 
+                            );
+                        }
 
                         ctx.fillStyle = fade ? "#000000" : "#ffffff";
                         ctx.strokeStyle = fade ? "#ffffff" : "#000000";
@@ -631,16 +695,17 @@ let controls = {
                 }
                 for (let popup of this.scorePopups) {
                     let tScale = ease(Math.min(popup.time ?? 0, 1)) * scale;
+                    if (popup.type == "power") tScale *= .75;
                     ctx.globalAlpha = Math.min(2 - popup.time * 2, 1);
                     ctx.font = "bold " + 40 * tScale + "px Arial";
                     ctx.strokeStyle = colors[popup.color] + "77";
-                    ctx.lineWidth = 10 * tScale;
+                    ctx.lineWidth = (popup.type == "power" ? 8 : 10) * tScale;
                     ctx.strokeText(
                         popup.score.toLocaleString("en-US"),
                         this.rect.x + popup.pos.x * size, 
                         this.rect.y + (popup.pos.y - (popup.time ?? 0)) * size, 
                     );
-                    ctx.strokeStyle = "#ffffff";
+                    ctx.strokeStyle = (popup.type == "power" ? "#ffffff77" : "#ffffff");
                     ctx.lineWidth = 5 * tScale;
                     ctx.strokeText(
                         popup.score.toLocaleString("en-US"),

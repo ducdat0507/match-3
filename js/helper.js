@@ -10,7 +10,7 @@ function Board(args = {}) {
     let board = {
         width: 8,
         height: 8,
-        types: 7,
+        types: 6,
         tiles: {},
         get(x, y) {
             return this.tiles[x + y * 100]
