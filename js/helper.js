@@ -10,18 +10,21 @@ function Board(args = {}) {
     let board = {
         width: 8,
         height: 8,
-        types: 6,
+        types: 7,
         tiles: {},
         get(x, y) {
             return this.tiles[x + y * 100]
         },
         refill() {
             let fills = [];
+            let check = true;
 
             for (let x = 0; x < this.width; x++) {
                 let cy = this.height - 1;
                 for (let y = cy; y >= 0; y--) {
                     if (this.tiles[x + y * 100]) {
+                        check &&= !["fade", "power-fade"].includes(this.tiles[x + y * 100].anim);
+
                         if (this.tiles[x + y * 100].anim || this.tiles[x + y * 100].swapCheck !== undefined) {
                             cy = y - 1;
                         } else {
@@ -37,7 +40,7 @@ function Board(args = {}) {
                 if (cy >= 0) {
                     for (let y = 0; y <= cy; y++) {
                         let yPos = Math.max(
-                            cy + (window.innerHeight / 800) / scale * this.height - 5,
+                            cy - y + (window.innerHeight / 800) / scale * this.height - 5,
                             this.tiles[x + (y - 1) * 100]?.offset.y ?? 0,
                         )
                         this.tiles[x + y * 100] = {
@@ -50,9 +53,11 @@ function Board(args = {}) {
                 }
             }
 
-            if (fills.length > 0) while (this.findValidMoves().count == 0) {
-                for (let tile of fills) {
-                    this.tiles[tile].type = Math.floor(Math.random() * this.types);
+            if (check && fills.length > 0) {
+                while (this.findValidMoves().count == 0) {
+                    for (let tile of fills) {
+                        this.tiles[tile].type = Math.floor(Math.random() * this.types);
+                    }
                 }
             }
         },
@@ -60,10 +65,15 @@ function Board(args = {}) {
             let hozTiles = {}, vetTiles = {}, matches = { count: 0 };
             for (let x = 0; x < this.width; x++) {
                 for (let y = 0; y < this.height; y++) {
+                    let tile = this.get(x, y);
+
+                    if (!tile) continue;
+                    if (tile.type >= 7) continue;
+
                     if (hozTiles[x + y * 100] === undefined && x < this.width - 2) {
                         let hoz = 1;
                         for (hoz; hoz < this.width - x; hoz++) {
-                            if (this.get(x, y)?.type == this.get(x + hoz, y)?.type) {
+                            if (tile.type == this.get(x + hoz, y)?.type) {
                                 hozTiles[x + hoz + y * 100] = x + y * 100;
                             } else {
                                 break;
@@ -81,7 +91,7 @@ function Board(args = {}) {
                         let vet = 1;
                         let hozIndex = x + y * 100;
                         for (vet; vet < this.height - y; vet++) {
-                            if (this.get(x, y)?.type == this.get(x, y + vet)?.type) {
+                            if (tile.type == this.get(x, y + vet)?.type) {
                                 let ind = x + (y + vet) * 100
                                 vetTiles[ind] = x + y * 100;
                                 if (hozTiles[ind] !== undefined) hozIndex = hozTiles[ind]
@@ -116,6 +126,12 @@ function Board(args = {}) {
                     let tileB = this.tiles[x + y * 100 + 1];
                     if (!tileA || tileA.fade || !tileB || tileB.fade) continue;
                     if (tileA.type == tileB.type) continue;
+                    
+                    if (tileA.type >= 7 || tileB.type >= 7) {
+                        moves[x + y * 100] = { hoz: true };
+                        moves.count++;
+                        continue;
+                    }
 
                     let counter = 0;
                     if (tileA.type == this.tiles[x + y * 100 - 99]?.type) {
@@ -168,6 +184,12 @@ function Board(args = {}) {
                     let tileB = this.tiles[x + y * 100 + 100];
                     if (!tileA || tileA.fade || !tileB || tileB.fade) continue;
                     if (tileA.type == tileB.type) continue;
+                    
+                    if (tileA.type >= 7 || tileB.type >= 7) {
+                        moves[x + y * 100] = { ...moves[x + y * 100], vet: true };
+                        moves.count++;
+                        continue;
+                    }
 
                     let counter = 0;
                     if (tileA.type == this.tiles[x + y * 100 + 99]?.type) {
@@ -186,7 +208,7 @@ function Board(args = {}) {
                         tileA.type == this.tiles[x + y * 100 + 200]?.type && 
                         tileA.type == this.tiles[x + y * 100 + 300]?.type
                     )) {
-                        moves[x + y * 100] = { vet: true };
+                        moves[x + y * 100] = { ...moves[x + y * 100], vet: true };
                         moves.count++;
                         continue;
                     }
@@ -208,7 +230,7 @@ function Board(args = {}) {
                         tileB.type == this.tiles[x + y * 100 - 100]?.type && 
                         tileB.type == this.tiles[x + y * 100 - 200]?.type
                     )) {
-                        moves[x + y * 100] = { vet: true };
+                        moves[x + y * 100] = { ...moves[x + y * 100], vet: true };
                         moves.count++;
                         continue;
                     }

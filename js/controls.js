@@ -25,9 +25,13 @@ let controls = {
             alpha: 1,
             clickthrough: false,
 
+            __mouseIn: false,
+
             render() {},
 
             onupdate() {},
+            onpointerin() {},
+            onpointerout() {},
             onpointerdown() {},
             onpointermove() {},
             onpointerup() {},
@@ -78,11 +82,81 @@ let controls = {
         return {
             ...controls.rect(),
 
-            onpointerup() {
-                this.onclick();
+            __mouseActive: false,
+
+            onpointerin() {
+                mainCanvas.style.cursor = "pointer";
+            },
+
+            onpointerout() {
+                mainCanvas.style.cursor = "";
+            },
+
+            onpointerdown() {
+                this.__mouseActive = true;
+                let handler = (e) => {
+                    this.__mouseActive = false;
+                    let pos = {
+                        x: e.clientX,
+                        y: e.clientY,
+                    }
+                    if (pos.x >= this.rect.x && pos.y >= this.rect.y
+                        && pos.x <= this.rect.x + this.rect.width
+                        && pos.y <= this.rect.y + this.rect.height) this.onclick();
+                    document.removeEventListener("pointerup", handler);
+                }
+                document.addEventListener("pointerup", handler);
             },
 
             onclick() {},
+            
+            render() {
+                ctx.fillStyle = this.fill;
+                if (this.radius) {
+                    let radius = this.radius * scale;
+                    ctx.beginPath();
+                    ctx.moveTo(this.rect.x + radius, this.rect.y);
+                    ctx.arc(
+                        this.rect.x + this.rect.width - radius, 
+                        this.rect.y + radius,
+                        radius, Math.PI * -.5, 0
+                    );
+                    ctx.arc(
+                        this.rect.x + this.rect.width - radius, 
+                        this.rect.y + this.rect.height - radius,
+                        radius, 0, Math.PI * .5
+                    );
+                    ctx.arc(
+                        this.rect.x + radius,
+                        this.rect.y + this.rect.height - radius, 
+                        radius, Math.PI * .5, Math.PI
+                    );
+                    ctx.arc(
+                        this.rect.x + radius, 
+                        this.rect.y + radius,
+                        radius, Math.PI, Math.PI * 1.5
+                    );
+                    ctx.fill();
+                    if (this.__mouseIn) {
+                        ctx.fillStyle = "#ffffff7f";
+                        ctx.fill();
+                        if (this.__mouseActive) {
+                            ctx.fillStyle = "#0000003f";
+                            ctx.fill();
+                        }
+                    }
+                } else {
+                    ctx.fillRect(this.rect.x, this.rect.y, this.rect.width, this.rect.height);
+                    if (this.__mouseIn) {
+                        ctx.fillStyle = "#ffffff7f";
+                        ctx.fillRect(this.rect.x, this.rect.y, this.rect.width, this.rect.height);
+                        if (this.__mouseActive) {
+                            ctx.fillStyle = "#0000003f";
+                            ctx.fillRect(this.rect.x, this.rect.y, this.rect.width, this.rect.height);
+                        }
+                    }
+                }
+            },
 
             ...args
         }
@@ -270,6 +344,9 @@ let controls = {
             hint: null,
             hintCooldown: 0,
 
+            pauseTimer: 0,
+            speed: 1,
+
             __mouseActive: false,
             onupdate() {
                 
@@ -277,33 +354,45 @@ let controls = {
                 let matchScores = [];
                 let matchTiles = {};
                 let powerScores = [];
+                let powers = [];
                 for (let id in this.matches) {
                     if (id == "count") continue;
                     let match = this.matches[id];
                     let matchable = true;
                     let tiles = {};
+
+                    let powerHoz = [];
                     if (match.hozLength) {
                         for (let c = 0; c - match.hozLength; c++) {
                             let tile = this.board.tiles[match.hozStart + c];
-                            matchable &&= tile && !tile.offset.y && !tile.animTime;
+                            matchable &&= tile && !tile.offset.y && !tile.anim;
                             tiles[match.hozStart + c] = (tiles[match.hozStart + c] ?? 0) + 1;
                             if (tile && tile.swapCheck !== undefined) {
                                 this.cascade = this.powerCascade = 0;
+                                powerHoz.unshift(match.hozStart + c);
                                 delete tile.swapCheck;
+                            } else {
+                                powerHoz.push(match.hozStart + c);
                             }
                         }
                     }
+
+                    let powerVet = [];
                     if (match.vetLength) {
                         for (let c = 0; c - match.vetLength; c++) {
                             let tile = this.board.tiles[match.vetStart + c * 100];
-                            matchable &&= tile && !tile.offset.y && !tile.animTime;
+                            matchable &&= tile && !tile.offset.y && !tile.anim;
                             tiles[match.vetStart + c * 100] = (tiles[match.vetStart + c * 100] ?? 0) + 1;
                             if (tile && tile.swapCheck !== undefined) {
                                 this.cascade = this.powerCascade = 0;
+                                powerVet.unshift(match.vetStart + c * 100);
                                 delete tile.swapCheck;
+                            } else {
+                                powerVet.push(match.vetStart + c * 100);
                             }
                         }
                     }
+
                     if (matchable) {
                         if (match.hozLength) matchScores.push({
                             pos: {
@@ -321,75 +410,15 @@ let controls = {
                             color: this.board.tiles[match.vetStart].type,
                             score: 50n * 3n ** BigInt(match.vetLength - 3)
                         });
+
+                        if (powerHoz.length >= 4) powers.push(powerHoz);
+                        if (powerVet.length >= 4) powers.push(powerVet);
+
                         for (let tile in tiles) {
                             matchTiles[tile] = (matchTiles[tile] ?? 0) + tiles[tile];
                         }
                     }
                 }
-                
-                for (let tile in matchTiles) {
-                    if (matchTiles[tile] >= 2) {
-                        this.board.tiles[tile].power = "star";
-                    } else {
-                        if (this.board.tiles[tile].power == "star") {
-                            let [x, y] = [
-                                tile % 100,
-                                Math.floor(tile / 100) + Math.round(this.board.tiles[tile].offset.y),
-                            ]
-                            for (let tid in this.board.tiles) {
-                                let tTile = this.board.tiles[tid];
-                                if (tid == tile || !tTile) continue;
-                                let [px, py] = [
-                                    tid % 100,
-                                    Math.floor(tid / 100) + Math.round(tTile.offset.y),
-                                ]
-                                console.log(tid, x, y, px, py)
-                                if ((x == px || y == py) && (!tTile.anim || tTile.anim == "fade")) {
-                                    tTile.anim = "power-fade";
-                                    tTile.animTime = 1 - (Math.abs(x - px) + Math.abs(y - py)) / 5;
-                                    tTile.animArgs = { manual: false };
-                                    powerScores.push({
-                                        pos: {
-                                            x: px + .5,
-                                            y: py + .5,
-                                        },
-                                        color: tTile.type,
-                                        score: 20n
-                                    })
-                                }
-                            }
-                        }
-                        if (!["fade", "power-fade"].includes(this.board.tiles[tile].anim)) {
-                            this.board.tiles[tile].anim = "fade";
-                            this.board.tiles[tile].animTime = 1e-6;
-                            this.board.tiles[tile].animArgs = { manual: this.cascade <= 0 };
-                        }
-                    }
-                }
-                
-                if (matchScores.length > 0) {
-                    matchScores.sort((a, b) => Number(b.score - a.score));
-                    for (let id in matchScores) {
-                        this.cascade++;
-                        matchScores[id].score *= BigInt(this.cascade);
-                        this.score += matchScores[id].score;
-                        this.lerpScore += Number(matchScores[id].score);
-                        this.scorePopups.push(matchScores[id]);
-                    }
-                }
-                
-                if (powerScores.length > 0) {
-                    for (let id in powerScores) {
-                        this.powerCascade++;
-                        powerScores[id].score += BigInt(this.powerCascade);
-                        powerScores[id].type = "power";
-                        this.score += powerScores[id].score;
-                        this.lerpScore += Number(powerScores[id].score);
-                        this.scorePopups.push(powerScores[id]);
-                    }
-                }
-
-                this.lerpScore *= 0.01 ** (delta / 1000);
 
                 let fallCount = 0;
                 let swaps = {};
@@ -425,19 +454,45 @@ let controls = {
                     
                     if (tile.anim == "fade") {
                         tile.animTime += delta / (tile.animArgs.manual ? 250 : 500);
-                        if (tile.animTime > 1) {
+                        if (tile.animTime >= 1) {
                             this.board.tiles[id] = null;
                             matched = true;
                         }
                     } else if (tile.anim == "power-fade") {
                         tile.animTime += delta / 500;
-                        if (tile.animTime > 1) {
+                        if (tile.animTime >= 1) {
                             this.board.tiles[id] = null;
                             matched = true;
                         }
+                    } else if (tile.anim == "power-match") {
+                        tile.animTime -= delta / 1000;
+                        if (tile.animArgs.pause) this.pauseTimer = Math.max(this.pauseTimer, tile.animArgs.pause);
+                        if (tile.animTime <= 0) {
+                            if (tile.animArgs.score) powerScores.push({
+                                pos: {
+                                    x: (id % 100) + (tile.offset.x) + .5, 
+                                    y: Math.floor(id / 100) - (tile.offset.y) + .5, 
+                                },
+                                color: tile.type,
+                                score: tile.animArgs.score
+                            })
+                            
+                            tile.anim = "power-fade";
+                            tile.animTime = 0;
+                            tile.animArgs = { manual: false };
+
+                            matchTiles[id] = matchTiles[id] ?? 1;
+                        }
+                    } else if (tile.anim == "transform") {
+                        tile.animTime -= delta / 1000;
+                        if (tile.animTime <= 0) {
+                            delete tile.anim;
+                            delete tile.animTime;
+                            delete tile.animArgs;
+                        }
                     } else if (tile.anim == "swap") {
                         tile.animTime += delta / 250;
-                        if (tile.animTime > 1) {
+                        if (tile.animTime >= 1) {
                             swaps[+id + tile.animArgs.offset.x + tile.animArgs.offset.y * 100] = tile;
                             if (!tile.animArgs.revert) tile.swapCheck = id;
                             delete tile.anim;
@@ -445,21 +500,189 @@ let controls = {
                             delete tile.animArgs;
                             matched = true;
                         }
+                    } else if (this.pauseTimer > 0) {
+                        tile.velocity.y = 0;
                     } else if (tile.offset.y > 0 || tile.velocity.y != 0) {
                         let limit = 0;
                         let count = 1;
                         while (count * 100 + +id < this.board.height * 100) {
-                            limit = Math.max((this.board.tiles[count * 100 + id]?.offset.y || 0), limit);
+                            limit = Math.max((this.board.tiles[count * 100 + +id]?.offset.y - 0.001 || 0), limit);
                             count++;
                         }
-                        tile.offset.y = Math.max(tile.offset.y + tile.velocity.y * delta / 1000, limit);
-                        tile.velocity.y = tile.offset.y > limit ? tile.velocity.y - delta / 30 : 0;
+                        tile.offset.y = Math.max(tile.offset.y + tile.velocity.y * delta * this.speed / 1000, limit);
+                        tile.velocity.y = tile.offset.y > limit ? tile.velocity.y - delta * this.speed / 30 : Math.max(0, tile.velocity.y);
                         fallCount ++;
                     }
                 }
-;
+
+                for (let tile in matchTiles) {
+                    let toPower = "";
+                    if (matchTiles[tile] >= 2) {
+                        toPower = "star";
+                    }
+
+                    if (this.board.tiles[tile].type == 7) {
+                        let power = this.board.tiles[tile].power;
+                        let type = this.board.tiles[tile].trigger.type;
+                        let [x, y] = [
+                            tile % 100,
+                            Math.floor(tile / 100) - Math.round(this.board.tiles[tile].offset.y),
+                        ]
+                        for (let tid in this.board.tiles) {
+                            let tTile = this.board.tiles[tid];
+                            if (!tTile) continue;
+                            let [px, py] = [
+                                tid % 100,
+                                Math.floor(tid / 100) - Math.round(tTile.offset.y),
+                            ]
+                            if (tTile.type == type && py >= -0.5 && (!tTile.anim || tTile.anim == "fade")) {
+                                if (power == "fourd") {
+                                    tTile.power = "cube";
+                                    tTile.type = 7;
+                                } else if (power == "sphere") {
+                                    tTile.anim = "power-match";
+                                    tTile.trigger = this.board.tiles[tile];
+                                    tTile.power = tTile.power ?? "flame";
+                                    tTile.animTime = (Math.abs(x - px) + Math.abs(y - py)) / 5 + 1;
+                                    tTile.animArgs = { score: 120n, pause: 500 };
+                                } else {
+                                    tTile.anim = "power-match";
+                                    tTile.trigger = this.board.tiles[tile];
+                                    tTile.animTime = (Math.abs(x - px) + Math.abs(y - py)) / 10 + .8;
+                                    tTile.animArgs = { score: 50n, pause: 500 };
+                                }
+                            }
+                        }
+                    } else if (this.board.tiles[tile].power == "star") {
+                        let [x, y] = [
+                            tile % 100,
+                            Math.floor(tile / 100) - Math.round(this.board.tiles[tile].offset.y),
+                        ]
+                        for (let tid in this.board.tiles) {
+                            let tTile = this.board.tiles[tid];
+                            if (!tTile) continue;
+                            let [px, py] = [
+                                tid % 100,
+                                Math.floor(tid / 100) - Math.round(tTile.offset.y),
+                            ]
+                            if ((x == px || y == py) && py >= -0.5 && (!tTile.anim || tTile.anim == "fade")) {
+                                tTile.anim = "power-match";
+                                tTile.animTime = (Math.abs(x - px) + Math.abs(y - py)) / 10 + .8;
+                                tTile.animArgs = { score: 40n, pause: 500 };
+                                tTile.trigger = this.board.tiles[tile];
+                            }
+                        }
+                    } else if (this.board.tiles[tile].power == "flame") {
+                        let [x, y] = [
+                            tile % 100,
+                            Math.floor(tile / 100) - Math.round(this.board.tiles[tile].offset.y),
+                        ]
+                        for (let tid in this.board.tiles) {
+                            let tTile = this.board.tiles[tid];
+                            if (!tTile) continue;
+                            let [px, py] = [
+                                tid % 100,
+                                Math.floor(tid / 100) - Math.round(tTile.offset.y),
+                            ]
+                            if (Math.abs(x - px) < 1.25 && (!tTile.anim || tTile.anim == "fade")) {
+                                if (Math.abs(y - py) < 1.25) {
+                                    tTile.anim = "power-match";
+                                    tTile.animTime = tid != tile && tTile.power == "flame" ? 0.2 : 0;
+                                    tTile.animArgs = { score: 20n };
+                                    tTile.trigger = this.board.tiles[tile];
+                                } else if (py - y < 0) {
+                                    tTile.velocity.y = Math.max(tTile.velocity.y, 5.5 - Math.abs(x - px) * 0.5);
+                                    this.speed = 0.4;
+                                }
+                            }
+                        }
+                    } else if (this.board.tiles[tile].power == "nova") {
+                        let [x, y] = [
+                            tile % 100,
+                            Math.floor(tile / 100) - Math.round(this.board.tiles[tile].offset.y),
+                        ]
+                        for (let tid in this.board.tiles) {
+                            let tTile = this.board.tiles[tid];
+                            if (!tTile) continue;
+                            let [px, py] = [
+                                tid % 100,
+                                Math.floor(tid / 100) - Math.round(tTile.offset.y),
+                            ]
+                            if ((Math.abs(x - px) < 1.25 || Math.abs(y - py) < 1.25) && py >= -0.5 && (!tTile.anim || tTile.anim == "fade")) {
+                                tTile.anim = "power-match";
+                                tTile.animTime = (Math.abs(x - px) + Math.abs(y - py)) / 10 + .8;
+                                tTile.animArgs = { score: 80n, pause: 500 };
+                                tTile.trigger = this.board.tiles[tile];
+                            }
+                        }
+                    }
+
+                    delete this.board.tiles[tile].power;
+                    if (matchTiles[tile] >= 2) {
+                        this.board.tiles[tile].power = toPower;
+                        this.board.tiles[tile].anim = "transform";
+                        this.board.tiles[tile].animTime = 1e-6;
+                    } else if (!["fade", "power-fade", "power-match"].includes(this.board.tiles[tile].anim)) {
+                        this.board.tiles[tile].anim = "fade";
+                        this.board.tiles[tile].animTime = 1e-6;
+                        this.board.tiles[tile].animArgs = { manual: this.cascade <= 0 };
+                    }
+                }
+                
+                for (let power of powers) {
+                    let tile;
+                    for (tile of power) {
+                        if (this.board.tiles[tile] && !this.board.tiles[tile].power) {
+                            break;
+                        }
+                    }
+                    console.log(power, tile);
+
+                    tile = this.board.tiles[tile];
+
+                    tile.power = {
+                        4: "flame",
+                        5: "cube",
+                        6: "nova",
+                        7: "sphere",
+                        8: "fourd",
+                    }[power.length] ?? "fourd";
+
+                    if (["cube", "sphere", "fourd"].includes(tile.power)) {
+                        tile.type = 7;
+                    }
+                    
+                    tile.anim = "transform";
+                    tile.animTime = 1e-6;
+                }
+                
+                if (powerScores.length > 0) {
+                    for (let id in powerScores) {
+                        this.powerCascade++;
+                        powerScores[id].score += BigInt(this.powerCascade);
+                        powerScores[id].type = "power";
+                        this.score += powerScores[id].score;
+                        this.lerpScore += Number(powerScores[id].score);
+                        this.scorePopups.push(powerScores[id]);
+                    }
+                }
+                
+                if (matchScores.length > 0) {
+                    matchScores.sort((a, b) => Number(b.score - a.score));
+                    for (let id in matchScores) {
+                        this.cascade++;
+                        matchScores[id].score *= BigInt(this.cascade);
+                        this.score += matchScores[id].score;
+                        this.lerpScore += Number(matchScores[id].score);
+                        this.scorePopups.push(matchScores[id]);
+                    }
+                }
+
+                this.speed = Math.min(this.speed + delta / 1000 * this.speed, 1);
+                this.pauseTimer -= delta;
+                this.lerpScore *= 0.01 ** (delta / 1000);
+
                 for (let id in swaps) {
-                    console.log(swaps, id);
                     this.board.tiles[id] = swaps[id];
                 }
 
@@ -480,19 +703,63 @@ let controls = {
                 this.hintCooldown -= delta;
             },
             makeMatch(oldPos, newPos) {
+                if (this.pauseTimer >= 0) return;
+
                 let oldTile = this.board.tiles[oldPos.x + oldPos.y * 100];
                 let newTile = this.board.tiles[newPos.x + newPos.y * 100];
                 if (
                     !oldTile || oldTile.offset.y || oldTile.anim || oldTile.swapCheck ||
                     !newTile || newTile.offset.y || newTile.anim || newTile.swapCheck
                 ) return;
+
+                if (oldTile.type == 7) {
+                    [oldPos, newPos] = [newPos, oldPos];
+                    [oldTile, newTile] = [newTile, oldTile];
+                }
+
+                if (newTile.type == 7) {
+                    this.powerCascade = this.cascade = 0;
+                    if (oldTile.type == 7) {
+                        let scores = {
+                            "cube": 1n,
+                            "sphere": 2n,
+                            "fourd": 5n,
+                        }
+                        let score = 50n * scores[newTile.power] * scores[oldTile.power];
+                        
+                        let [x, y] = [
+                            (oldPos.x + newPos.x) / 2, (oldPos.y + newPos.y) / 2,
+                        ]
+
+                        for (let tid in this.board.tiles) {
+                            let tTile = this.board.tiles[tid];
+                            if (!tTile) continue;
+                            let [px, py] = [
+                                tid % 100,
+                                Math.floor(tid / 100) - Math.round(tTile.offset.y),
+                            ]
+                            if (py >= -0.5 && (!tTile.anim || tTile.anim == "fade")) {
+                                tTile.anim = "power-match";
+                                tTile.animTime = (Math.abs(x - px) + Math.abs(y - py)) / 10 + .8;
+                                tTile.animArgs = { score, pause: 500 };
+                                tTile.trigger = newTile;
+                            }
+                        }
+                    } else {
+                        newTile.anim = "power-match";
+                        newTile.animTime = 0;
+                        newTile.animArgs = {};
+                        newTile.trigger = oldTile;
+                    }
+                } else {
+                    oldTile.anim = "swap";
+                    oldTile.animTime = 1e-6;
+                    oldTile.animArgs = { offset: { x: newPos.x - oldPos.x, y: newPos.y - oldPos.y } };
+                    newTile.anim = "swap";
+                    newTile.animTime = 1e-6;
+                    newTile.animArgs = { offset: { x: -oldTile.animArgs.offset.x, y: -oldTile.animArgs.offset.y } };
+                }
                 
-                oldTile.anim = "swap";
-                oldTile.animTime = 1e-6;
-                oldTile.animArgs = { offset: { x: newPos.x - oldPos.x, y: newPos.y - oldPos.y } };
-                newTile.anim = "swap";
-                newTile.animTime = 1e-6;
-                newTile.animArgs = { offset: { x: -oldTile.animArgs.offset.x, y: -oldTile.animArgs.offset.y } };
             },
             showHint() {
                 if (this.fallCount || this.hintCooldown > 0) return;
@@ -507,7 +774,6 @@ let controls = {
                         this.moves[chosen].hoz ? ["vet", "hoz"][Math.floor(Math.random() * 2)] : "vet"
                     ) : "hoz"
                 }
-                console.log(list, chosen, this.hint);
                 this.hintCooldown = 5000;
             },
             onpointerdown(e) {
@@ -594,6 +860,7 @@ let controls = {
                     for (let y = this.board.height - 1; y >= 0; y--) {
                         let tile = this.board.tiles[x + y * 100];
                         if (!tile) continue;
+
                         let fade = ["fade", "power-fade"].includes(tile.anim) ? tile.animTime : 0;
                         let tScale = (fade <= 0 ? 1 : 1 - ease(fade)) * .8;
                         let offset = {
@@ -603,37 +870,57 @@ let controls = {
 
                         if (tile.anim == "swap") {
                             let lerp = 0.5 - Math.cos(tile.animTime * Math.PI) / 2;
-                            console.log(tile.animTime, lerp);
                             offset.x += tile.animArgs.offset.x * lerp;
                             offset.y -= tile.animArgs.offset.y * lerp;
                             tScale *= 0.8 ** ((offset.x + offset.y) * Math.sin(tile.animTime * Math.PI));
+                        } else if (tile.anim == "power-match") {
+                            offset.x += Math.random() * .1 - .05;
+                            offset.y += Math.random() * .1 - .05;
                         }
 
-                        ctx.fillStyle = fade ? "#ffffff" : "#000000";
-                        ctx.fillRect(
-                            this.rect.x + size * (x + offset.x + .525 - tScale / 2), 
-                            this.rect.y + size * (y - offset.y + .525 - tScale / 2), 
-                            size * tScale, 
-                            size * tScale, 
-                        );
-
-                        ctx.fillStyle = fade ? "#000000" : colors[tile.type];
-                        ctx.fillRect(
-                            this.rect.x + size * (x + offset.x + .5 - tScale / 2), 
-                            this.rect.y + size * (y - offset.y + .5 - tScale / 2), 
-                            size * tScale, 
-                            size * tScale, 
-                        );
-                        
-                        ctx.fillStyle = fade ? "#000000" : "#ffffff";
-                        ctx.font = 80 * scale * tScale + "px Arial";
-                        if (tile.power == "star") {
+                        ctx.font = 120 * scale * tScale + "px Arial";
+                        if (tile.power) {
+                            let icon = {
+                                star: "✦",
+                                flame: "🔥",
+                                cube: "⬛",
+                                nova: "🌌",
+                                sphere: "🔴",
+                                fourd: "E",
+                            }[tile.power];
+                            
+                            ctx.fillStyle = fade ? "#ffffff" : "#000000";
                             ctx.fillText(
-                                "S",
+                                icon,
+                                this.rect.x + size * (x + offset.x + .525), 
+                                this.rect.y + size * (y - offset.y + .625), 
+                            );
+
+                            ctx.fillStyle = fade ? "#000000" : tile.type == 7 ? 
+                                "hsl(" + ((time / 5) % 360) + "deg, 100%, 50%)" : colors[tile.type];
+                            ctx.fillText(
+                                icon,
                                 this.rect.x + size * (x + offset.x + .5), 
-                                this.rect.y + size * (y - offset.y + .5), 
+                                this.rect.y + size * (y - offset.y + .6), 
+                            );
+                        } else {
+                            ctx.fillStyle = fade ? "#ffffff" : "#000000";
+                            ctx.fillRect(
+                                this.rect.x + size * (x + offset.x + .525 - tScale / 2), 
+                                this.rect.y + size * (y - offset.y + .525 - tScale / 2), 
+                                size * tScale, 
+                                size * tScale, 
+                            );
+    
+                            ctx.fillStyle = fade ? "#000000" : colors[tile.type];
+                            ctx.fillRect(
+                                this.rect.x + size * (x + offset.x + .5 - tScale / 2), 
+                                this.rect.y + size * (y - offset.y + .5 - tScale / 2), 
+                                size * tScale, 
+                                size * tScale, 
                             );
                         }
+                        
 
                         ctx.fillStyle = fade ? "#000000" : "#ffffff";
                         ctx.strokeStyle = fade ? "#ffffff" : "#000000";

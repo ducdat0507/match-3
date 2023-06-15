@@ -23,6 +23,7 @@ screens.intro = function () {
     scene.$hint.append(controls.label({
         position: Ex(0, 0, 50, 50),
         scale: 30,
+        style: "900",
         text: "Hint",
     }), "text")
 }

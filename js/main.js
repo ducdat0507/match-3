@@ -67,11 +67,22 @@ let pointers = {};
 function doPointerEvent(pos, cts, event, args) {
     for (let ct of cts) {
         if (ct.clickthrough) continue;
+
         if (pos.x >= ct.rect.x && pos.y >= ct.rect.y
             && pos.x <= ct.rect.x + ct.rect.width
             && pos.y <= ct.rect.y + ct.rect.height) {
             ct[event](pos, args);
+            if (!ct.__mouseIn) {
+                ct.onpointerin(pos, args);
+                ct.__mouseIn = true;
+            }
+        } else {
+            if (ct.__mouseIn) {
+                ct.onpointerout(pos, args);
+                ct.__mouseIn = false;
+            }
         }
+        
         if (ct.controls.length) doPointerEvent(pos, ct.controls, event, args);
     }
 }
