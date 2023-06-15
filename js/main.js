@@ -10,6 +10,8 @@ function init() {
     window.oncontextmenu = e => false;
     // load();
 
+    loadRes();
+
     screens.intro();
 
     loop();
@@ -82,7 +84,7 @@ function doPointerEvent(pos, cts, event, args) {
                 ct.__mouseIn = false;
             }
         }
-        
+
         if (ct.controls.length) doPointerEvent(pos, ct.controls, event, args);
     }
 }

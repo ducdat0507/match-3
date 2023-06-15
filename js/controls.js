@@ -862,7 +862,7 @@ let controls = {
                         if (!tile) continue;
 
                         let fade = ["fade", "power-fade"].includes(tile.anim) ? tile.animTime : 0;
-                        let tScale = (fade <= 0 ? 1 : 1 - ease(fade)) * .8;
+                        let tScale = (fade <= 0 ? 1 : 1 - ease(fade));
                         let offset = {
                             x: tile.offset.x,
                             y: tile.offset.y
@@ -878,7 +878,16 @@ let controls = {
                             offset.y += Math.random() * .1 - .05;
                         }
 
-                        ctx.font = 120 * scale * tScale + "px Arial";
+                        ctx.font = 40 * scale * tScale + "px Arial";
+                        
+                        if (tile.type < 7) ctx.drawImage(
+                            res[fade ? "tilesFade" : "tiles"][tile.type],
+                            this.rect.x + size * (x + offset.x + .5 - tScale / 2), 
+                            this.rect.y + size * (y - offset.y + .5 - tScale / 2), 
+                            size * tScale, 
+                            size * tScale, 
+                        );
+
                         if (tile.power) {
                             let icon = {
                                 star: "✦",
@@ -888,54 +897,15 @@ let controls = {
                                 sphere: "🔴",
                                 fourd: "E",
                             }[tile.power];
-                            
-                            ctx.fillStyle = fade ? "#ffffff" : "#000000";
-                            ctx.fillText(
-                                icon,
-                                this.rect.x + size * (x + offset.x + .525), 
-                                this.rect.y + size * (y - offset.y + .625), 
-                            );
 
-                            ctx.fillStyle = fade ? "#000000" : tile.type == 7 ? 
-                                "hsl(" + ((time / 5) % 360) + "deg, 100%, 50%)" : colors[tile.type];
-                            ctx.fillText(
+                            ctx.strokeStyle = "#000000";
+                            ctx.strokeText(
                                 icon,
                                 this.rect.x + size * (x + offset.x + .5), 
-                                this.rect.y + size * (y - offset.y + .6), 
-                            );
-                        } else {
-                            ctx.fillStyle = fade ? "#ffffff" : "#000000";
-                            ctx.fillRect(
-                                this.rect.x + size * (x + offset.x + .525 - tScale / 2), 
-                                this.rect.y + size * (y - offset.y + .525 - tScale / 2), 
-                                size * tScale, 
-                                size * tScale, 
-                            );
-    
-                            ctx.fillStyle = fade ? "#000000" : colors[tile.type];
-                            ctx.fillRect(
-                                this.rect.x + size * (x + offset.x + .5 - tScale / 2), 
-                                this.rect.y + size * (y - offset.y + .5 - tScale / 2), 
-                                size * tScale, 
-                                size * tScale, 
+                                this.rect.y + size * (y - offset.y + .5), 
                             );
                         }
                         
-
-                        ctx.fillStyle = fade ? "#000000" : "#ffffff";
-                        ctx.strokeStyle = fade ? "#ffffff" : "#000000";
-                        ctx.font = 40 * scale * tScale + "px Arial";
-                        ctx.lineWidth = 6 * scale * tScale;
-                        ctx.strokeText(
-                            tile.type,
-                            this.rect.x + size * (x + offset.x + .5), 
-                            this.rect.y + size * (y - offset.y + .5), 
-                        );
-                        ctx.fillText(
-                            tile.type,
-                            this.rect.x + size * (x + offset.x + .5), 
-                            this.rect.y + size * (y - offset.y + .5), 
-                        );
                     }
                 }
 
