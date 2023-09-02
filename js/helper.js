@@ -47,6 +47,7 @@ function Board(args = {}) {
                             type: Math.floor(Math.random() * this.types),
                             offset: { x: 0, y: yPos },
                             velocity: { x: 0, y: cy - y },
+                            lifetime: 0,
                         }
                         fills.push(x + y * 100);
                     }

@@ -26,4 +26,16 @@ screens.intro = function () {
         style: "900",
         text: "Hint",
     }), "text")
+    
+    scene.append(controls.base({
+        onupdate() {
+            if (window.innerWidth / scale >= 1000) {
+                scene.$board.position = Ex(-150, -300, 50, 50);
+                scene.$hint.position = Ex(-450, 240, 50, 50);
+            } else {
+                scene.$board.position = Ex(-300, -300, 50, 50);
+                scene.$hint.position = Ex(110, 310, 50, 50);
+            }
+        }
+    }), "logic")
 }

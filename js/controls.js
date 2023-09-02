@@ -425,6 +425,8 @@ let controls = {
                 for (let id of Object.keys(this.board.tiles).reverse()) {
                     let tile = this.board.tiles[id];
                     if (!tile) continue;
+                    
+                    tile.lifetime += delta / 1000;
 
                     if (tile.swapCheck !== undefined) {
                         if (this.board.tiles[tile.swapCheck]?.swapCheck == id) {
@@ -653,6 +655,7 @@ let controls = {
                     }
                     
                     tile.anim = "transform";
+                    tile.lifetime = 0;
                     tile.animTime = 1e-6;
                 }
                 
@@ -826,6 +829,81 @@ let controls = {
                     }
                 }
             },
+            drawTile(type, x, y, stroke, fill, size) {
+                ctx.fillStyle = fill;
+                ctx.strokeStyle = stroke;
+                ctx.lineWidth = size * .03;
+                if (type == 0) {
+                    ctx.fillRect(
+                        x - size * .3375, y - size * .3375, 
+                        size * .675, size * .675
+                    );
+                    ctx.strokeRect(
+                        x - size * .3375, y - size * .3375, 
+                        size * .675, size * .675
+                    );
+                } else if (type == 1) {
+                    ctx.beginPath();
+                    ctx.moveTo(x + size * .375, y);
+                    for (let a = 1; a <= 10; a++) {
+                        ctx.lineTo(
+                            x + size * (Math.cos(Math.PI * a / 5) * .375),
+                            y + size * (Math.sin(Math.PI * a / 5) * .375)
+                        );
+                    }
+                    ctx.fill();
+                    ctx.stroke();
+                } else if (type == 2) {
+                    ctx.beginPath();
+                    ctx.moveTo(x + size * .4, y);
+                    for (let a = 1; a <= 4; a++) {
+                        ctx.lineTo(
+                            x + size * (Math.cos(Math.PI * a / 2) * .4),
+                            y + size * (Math.sin(Math.PI * a / 2) * .4)
+                        );
+                    }
+                    ctx.fill();
+                    ctx.stroke();
+                } else if (type == 3) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, y - size * .35);
+                    for (let a = 1; a <= 3; a++) {
+                        ctx.lineTo(
+                            x + size * (Math.sin(Math.PI * a / 1.5) * .4),
+                            y + size * (Math.cos(Math.PI * a / 1.5) * -.45 + .10)
+                        );
+                    }
+                    ctx.fill();
+                    ctx.stroke();
+                } else if (type == 4) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, y + size * .3625);
+                    for (let a = 1; a <= 6; a++) {
+                        ctx.lineTo(
+                            x + size * (Math.sin(Math.PI * a / 3) * .3625),
+                            y + size * (Math.cos(Math.PI * a / 3) * .3625)
+                        );
+                    }
+                    ctx.fill();
+                    ctx.stroke();
+                } else if (type == 5) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, y + size * .35);
+                    for (let a = 1; a <= 3; a++) {
+                        ctx.lineTo(
+                            x + size * (Math.sin(Math.PI * a / 1.5) * .4),
+                            y + size * (Math.cos(Math.PI * a / 1.5) * .45 - .10)
+                        );
+                    }
+                    ctx.fill();
+                    ctx.stroke();
+                } else if (type == 6) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, size * .35, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+            },
             render() {
                 let size = Math.min(this.rect.width / this.board.width, this.rect.height / this.board.height);
                 let colors = ["#ff0000", "#49e400", "#0065eb", "#ff00e4", "#fb5500", "#eecb00", "#fff7ea"];
@@ -861,6 +939,7 @@ let controls = {
                         let tile = this.board.tiles[x + y * 100];
                         if (!tile) continue;
 
+
                         let fade = ["fade", "power-fade"].includes(tile.anim) ? tile.animTime : 0;
                         let tScale = (fade <= 0 ? 1 : 1 - ease(fade));
                         let offset = {
@@ -880,18 +959,56 @@ let controls = {
 
                         ctx.font = 40 * scale * tScale + "px Arial";
                         
-                        if (tile.type < 7) ctx.drawImage(
-                            res[fade ? "tilesFade" : "tiles"][tile.type],
-                            this.rect.x + size * (x + offset.x + .5 - tScale / 2), 
-                            this.rect.y + size * (y - offset.y + .5 - tScale / 2), 
-                            size * tScale, 
-                            size * tScale, 
-                        );
+                        if (tile.type < 7) {
+                            this.drawTile(
+                                tile.type,
+                                this.rect.x + size * (x + offset.x + .54), 
+                                this.rect.y + size * (y - offset.y + .54), 
+                                fade ? "white" : "#000a",
+                                fade ? "white" : "#000a",
+                                size * tScale, 
+                            );
+
+                            this.drawTile(
+                                tile.type,
+                                this.rect.x + size * (x + offset.x + .5), 
+                                this.rect.y + size * (y - offset.y + .5), 
+                                fade ? "white" : "#ddd",
+                                fade ? "black" : colors[tile.type],
+                                size * tScale, 
+                            );
+                                
+                            if (fade) {
+
+                            } else if (tile.power == "star") {
+                                for (let a = 0; a < 5; a++) {
+                                    this.drawTile(
+                                        tile.type,
+                                        this.rect.x + size * (x + offset.x + .475 + Math.random() * .05), 
+                                        this.rect.y + size * (y - offset.y + .475 + Math.random() * .05), 
+                                        "#ddf7",
+                                        "#0000",
+                                        size * tScale * 1.1, 
+                                    );
+                                }
+                            } else if (tile.power == "flame") {
+                                for (let a = 0; a < 5; a++) {
+                                    this.drawTile(
+                                        tile.type,
+                                        this.rect.x + size * (x + offset.x + .5), 
+                                        this.rect.y + size * (y - offset.y + .5), 
+                                        "#fd87",
+                                        "#0000",
+                                        size * tScale * (1.1 + Math.sin(tile.lifetime * 1.2 ** a) * (.1 + a * .01)), 
+                                    );
+                                }
+                            }
+                        }
 
                         if (tile.power) {
                             let icon = {
-                                star: "✦",
-                                flame: "🔥",
+                                star: "",
+                                flame: "",
                                 cube: "⬛",
                                 nova: "🌌",
                                 sphere: "🔴",
