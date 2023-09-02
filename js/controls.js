@@ -833,6 +833,7 @@ let controls = {
                 ctx.fillStyle = fill;
                 ctx.strokeStyle = stroke;
                 ctx.lineWidth = size * .03;
+                // TODO: Deyandere this
                 if (type == 0) {
                     ctx.fillRect(
                         x - size * .3375, y - size * .3375, 
@@ -844,11 +845,11 @@ let controls = {
                     );
                 } else if (type == 1) {
                     ctx.beginPath();
-                    ctx.moveTo(x + size * .375, y);
-                    for (let a = 1; a <= 10; a++) {
+                    ctx.moveTo(x, y - size * .3875);
+                    for (let a = 1; a <= 5; a++) {
                         ctx.lineTo(
-                            x + size * (Math.cos(Math.PI * a / 5) * .375),
-                            y + size * (Math.sin(Math.PI * a / 5) * .375)
+                            x - size * (Math.sin(Math.PI * a / 2.5) * .3875),
+                            y - size * (Math.cos(Math.PI * a / 2.5) * .3875)
                         );
                     }
                     ctx.fill();
@@ -984,8 +985,8 @@ let controls = {
                                 for (let a = 0; a < 5; a++) {
                                     this.drawTile(
                                         tile.type,
-                                        this.rect.x + size * (x + offset.x + .475 + Math.random() * .05), 
-                                        this.rect.y + size * (y - offset.y + .475 + Math.random() * .05), 
+                                        this.rect.x + size * (x + offset.x + .4625 + Math.random() * .075), 
+                                        this.rect.y + size * (y - offset.y + .4625 + Math.random() * .075), 
                                         "#ddf7",
                                         "#0000",
                                         size * tScale * 1.1, 
