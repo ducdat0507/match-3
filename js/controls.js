@@ -1096,32 +1096,6 @@ let controls = {
                 }
                 ctx.globalAlpha = 1;
 
-                ctx.fillStyle = "#ffffff";
-                ctx.strokeStyle = "#000000";
-                ctx.font = "bold " + 50 * scale + "px Arial";
-                ctx.lineWidth = 8 * scale;
-                ctx.textAlign = "right";
-                let scoreDisp = this.score - BigInt(Math.round(this.lerpScore));
-                ctx.strokeText(
-                    scoreDisp.toLocaleString("en-US"),
-                    this.rect.x + this.rect.width - 25 * scale, 
-                    this.rect.y - 40 * scale, 
-                );
-                ctx.globalAlpha = Math.min(this.lerpScore / 20, 0.5);
-                ctx.strokeStyle = "#ffffff";
-                ctx.lineWidth = 4 * scale;
-                ctx.strokeText(
-                    scoreDisp.toLocaleString("en-US"),
-                    this.rect.x + this.rect.width - 25 * scale, 
-                    this.rect.y - 40 * scale, 
-                );
-                ctx.globalAlpha = 1
-                ctx.fillText(
-                    scoreDisp.toLocaleString("en-US"),
-                    this.rect.x + this.rect.width - 25 * scale, 
-                    this.rect.y - 40 * scale, 
-                );
-
                 if (this.moves.count == 0 && this.matches.count == 0 && this.fallCount == 0) {
                     ctx.fillStyle = "#ffffff";
                     ctx.strokeStyle = "#000000";

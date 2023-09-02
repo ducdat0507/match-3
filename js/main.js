@@ -12,7 +12,7 @@ function init() {
 
     loadRes();
 
-    screens.intro();
+    loadScreen("intro");
 
     loop();
 }
@@ -38,7 +38,7 @@ function loop() {
     let width = mainCanvas.width = window.innerWidth;
     let height = mainCanvas.height = window.innerHeight;
     scale = Math.min(width / 600, height / 800, window.devicePixelRatio);
-    ctx.fillStyle = "#000000";
+    ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, width, height);
 
     updateAnimations();
@@ -58,8 +58,8 @@ function renderControls(cts, rect, alpha = 1) {
         );
         let a = alpha * ct.alpha;
         ctx.globalAlpha = a;
-        if (a > 0) ct.render();
         ct.onupdate();
+        if (a > 0) ct.render();
         if (ct.controls.length) renderControls (ct.controls, ct.rect, a);
     }
 }
@@ -105,6 +105,11 @@ function doTouchEvent(e, type) {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
+}
+
+function loadScreen(screenName, clear = true) {
+    if (clear) scene = controls.base();
+    screens[screenName]();
 }
 
 function bindPointerEvent(type, mouse, touch) {

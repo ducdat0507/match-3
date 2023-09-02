@@ -1,41 +1,36 @@
 screens.intro = function () {
 
-    // The board
-    scene.append(controls.board({
-        position: Ex(-300, -300, 50, 50),
-        size: Ex(600, 600),
-    }), "board")
+    scene.append(controls.label({
+        position: Ex(0, -100, 50, 45),
+        size: Ex(600, 0),
+        scale: 70,
+        text: "YET ANOTHER MATCH-3 CLONE",
+        font: "'Trebuchet MS'",
+        style: "italic 900",
+        wrap: true,
+    }), "title")
 
-    // The hint button
-    scene.append(controls.button({
-        position: Ex(110, 310, 50, 50),
-        size: Ex(180, 60),
-        fill: "#aaaaaa77",
-        onclick() {
-            scene.$board.showHint();
-        }
-    }), "hint")
-    scene.$hint.append(controls.rect({
-        position: Ex(2, 2),
-        size: Ex(-4, -4, 100, 100),
-        fill: "#000000aa",
-    }), "fill")
-    scene.$hint.append(controls.label({
-        position: Ex(0, 0, 50, 50),
-        scale: 30,
-        style: "900",
-        text: "Hint",
-    }), "text")
-    
+    scene.append(controls.label({
+        position: Ex(0, 50, 50, 70),
+        size: Ex(0, 200),
+        scale: 25,
+        text: "Click or touch the screen to start",
+        style: "italic",
+    }), "action")
+
     scene.append(controls.base({
+        position: Ex(0, 0),
+        size: Ex(0, 0, 100, 100),
+        onpointerdown () {
+            loadScreen("game");
+        },
         onupdate() {
-            if (window.innerWidth / scale >= 1000) {
-                scene.$board.position = Ex(-150, -300, 50, 50);
-                scene.$hint.position = Ex(-450, 240, 50, 50);
-            } else {
-                scene.$board.position = Ex(-300, -300, 50, 50);
-                scene.$hint.position = Ex(110, 310, 50, 50);
-            }
+            let tWidth = Math.min(window.innerWidth / scale, 1000);
+            scene.$title.scale = tWidth / 10;
+            scene.$title.size = Ex(tWidth, 0);
+
+            scene.$action.position = Ex(0, 50 + Math.sin(Date.now() / 1000) * 10, 50, 70);
         }
-    }), "logic")
+    }), "logic");
+
 }
