@@ -18,19 +18,38 @@ screens.intro = function () {
         style: "italic",
     }), "action")
 
+    let isStarting = true;
+
     scene.append(controls.base({
         position: Ex(0, 0),
         size: Ex(0, 0, 100, 100),
         onpointerdown () {
-            loadScreen("game");
+            if (!isStarting) {
+                isStarting = true;
+                startAnimation(outtro);
+            }
         },
         onupdate() {
             let tWidth = Math.min(window.innerWidth / scale, 1000);
             scene.$title.scale = tWidth / 10;
             scene.$title.size = Ex(tWidth, 0);
 
-            scene.$action.position = Ex(0, 50 + Math.sin(Date.now() / 1000) * 10, 50, 70);
+            scene.$action.position.y = 50 + Math.sin(Date.now() / 1000) * 10;
         }
     }), "logic");
 
+    startAnimation(x => {
+        scene.$title.alpha = ease.quad.out(x / 500);
+        scene.$action.alpha = ease.cubic.out(x / 500);
+        if (x >= 500) isStarting = false;
+        return x >= 500;
+    });
+
+    function outtro(x) {
+        scene.$title.position.ex = 50 + ease.quart.in(x / 1000) * 100;
+        scene.$action.position.ex = 50 - ease.quart.in(x / 1000) * 100;
+        scene.$action.alpha = Math.cos(x / 20) / 2 + .5;
+        if (x >= 1000) loadScreen("game");
+        return x >= 1000;
+    }
 }
