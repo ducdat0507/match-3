@@ -82,7 +82,7 @@ screens.game = function () {
             scene.$hintbtn.$fill.$bar.size = Ex(0, 0, Math.min(Math.max(scene.$board.hintCooldown / 5000, 0), 1) * 100, 100);
 
             let level = Number(scene.$board.level) - 1;
-            let goal = Math.min(250 + 140 * level + 10 * level * level, 2000);
+            let goal = Math.min(250 + 150 * level, 1500);
             scene.$level.text = "Level " + scene.$board.level.toLocaleString("en-US");
             scene.$progress.progress += (Number(scene.$board.exp) / goal - scene.$progress.progress) * (1 - 0.01 ** (delta / 1000));
 
