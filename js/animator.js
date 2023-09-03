@@ -26,6 +26,9 @@ function makeEase(func) {
         inout: x => x < 0.5 ? func(x * 2) / 2 : (1 - func(2 - x * 2)) / 2 + .5
     }
 }
+function clamp01(x) {
+    return Math.min(Math.max(x, 0), 1);
+}
 
 let ease = {
     linear: makeEase(x => x),

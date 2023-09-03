@@ -165,6 +165,8 @@ let controls = {
         return {
             ...controls.base(),
             fill: "white",
+            stroke: "#0000",
+            thickness: 4,
             text: "",
             scale: 16,
             style: "normal",
@@ -174,6 +176,8 @@ let controls = {
 
             render() {
                 ctx.fillStyle = this.fill;
+                ctx.strokeStyle = this.stroke;
+                ctx.lineWidth = this.thickness * scale;
                 ctx.textAlign = this.align;
                 ctx.textBaseline = "middle";
                 ctx.font = this.style + " " + (this.scale * scale) + "px " + this.font;
@@ -183,6 +187,7 @@ let controls = {
                     let pos = this.rect.y;
                     for (let word of words) {
                         if (ctx.measureText(line + word).width > this.rect.width) {
+                            ctx.strokeText(line, this.rect.x, pos);
                             ctx.fillText(line, this.rect.x, pos);
                             pos += this.scale * scale * 1.2;
                             line = word + " ";
@@ -190,137 +195,68 @@ let controls = {
                             line += word + " ";
                         }
                     }
+                    ctx.strokeText(line, this.rect.x, pos);
                     ctx.fillText(line, this.rect.x, pos);
                 } else {
+                    ctx.strokeText(this.text, this.rect.x, this.rect.y, this.rect.width || undefined);
                     ctx.fillText(this.text, this.rect.x, this.rect.y, this.rect.width || undefined);
                 }
             },
             ...args
         }
     },
-    counter(args) {
+    gembar(args) {
         return {
-            ...controls.base(),
-            fillMain: "white",
-            fillSub: "#ffffff18",
-            value: 0,
-            design: {
-                width: 12,
-                height: 30,
-                charSpace: 2,
-                sepSpace: 5,
-                segments: [
-                    [
-                        ["moveTo", "1.5x", "0y"],
-                        ["lineTo", "9.5x", "0y"],
-                        ["lineTo", "9.5x", "2y"],
-                        ["lineTo", "0x", "2y"],
-                        ["lineTo", "0x", "1.5y"],
-                    ],
-                    [
-                        ["moveTo", "10.5x", "0y"],
-                        ["lineTo", "12x", "1.5y"],
-                        ["lineTo", "12x", "14.6y"],
-                        ["lineTo", "11x", "14.6y"],
-                        ["lineTo", "10x", "13.6y"],
-                        ["lineTo", "10x", "0y"],
-                    ],
-                    [
-                        ["moveTo", "11x", "15.4y"],
-                        ["lineTo", "12x", "15.4y"],
-                        ["lineTo", "12x", "28.5y"],
-                        ["lineTo", "10.5x", "30y"],
-                        ["lineTo", "10x", "30y"],
-                        ["lineTo", "10x", "16.4y"],
-                    ],
-                    [
-                        ["moveTo", "0x", "28y"],
-                        ["lineTo", "9.5x", "28y"],
-                        ["lineTo", "9.5x", "30y"],
-                        ["lineTo", "1.5x", "30y"],
-                        ["lineTo", "0x", "28.5y"],
-                    ],
-                    [
-                        ["moveTo", "1x", "15.4y"],
-                        ["lineTo", "2x", "16.4y"],
-                        ["lineTo", "2x", "27.5y"],
-                        ["lineTo", "0x", "27.5y"],
-                        ["lineTo", "0x", "15.4y"],
-                    ],
-                    [
-                        ["moveTo", "0x", "2.5y"],
-                        ["lineTo", "2x", "2.5y"],
-                        ["lineTo", "2x", "13.6y"],
-                        ["lineTo", "1x", "14.6y"],
-                        ["lineTo", "0x", "14.6y"],
-                    ],
-                    [
-                        ["moveTo", "2.7x", "14y"],
-                        ["lineTo", "9.3x", "14y"],
-                        ["lineTo", "10.3x", "15y"],
-                        ["lineTo", "9.3x", "16y"],
-                        ["lineTo", "2.7x", "16y"],
-                        ["lineTo", "1.7x", "15y"],
-                    ],
-                ],
-                digits: {
-                    0: [1, 1, 1, 1, 1, 1, 0],
-                    1: [0, 1, 1, 0, 0, 0, 0],
-                    2: [1, 1, 0, 1, 1, 0, 1],
-                    3: [1, 1, 1, 1, 0, 0, 1],
-                    4: [0, 1, 1, 0, 0, 1, 1],
-                    5: [1, 0, 1, 1, 0, 1, 1],
-                    6: [1, 0, 1, 1, 1, 1, 1],
-                    7: [1, 1, 1, 0, 0, 0, 0],
-                    8: [1, 1, 1, 1, 1, 1, 1],
-                    9: [1, 1, 1, 1, 0, 1, 1],
-                },
-            },
-            scale: 16,
+            ...controls.rect(),
 
+            progress: 0,
+
+            borderWidth: 4,
+            tileSize: 8,
+            
             render() {
-                let str = this.value.toFixed(0);
-                let unit = this.scale * scale / this.design.height;
-                let width = (
-                    str.length * this.design.width
-                    + (str.length - 1) * this.design.charSpace
-                    + Math.floor((str.length - 1) / 3) * this.design.sepSpace
-                ) * unit;
-                let offset = width / 2 - (this.design.width - this.design.sepSpace) * unit;
+                ctx.fillStyle = this.fill;
+                ctx.fillRect(
+                    this.rect.x, this.rect.y, 
+                    this.rect.width, this.rect.height
+                );
 
-                for (let a = 0; a < str.length; a++) {
-                    let digit = str[str.length - 1 - a];
-                    if (a % 3 == 0) offset -= (this.design.sepSpace) * unit;
-                    for (let s in this.design.segments) {
-                        let seg = this.design.segments[s];
-                        ctx.beginPath();
-                        for (let ins of seg) {
-                            let cmd = ins[0];
-                            let args = [];
-                            for (let i = 1; i < ins.length; i++) {
-                                let code = ins[i][ins[i].length - 1];
-                                if (code == "x") {
-                                    args.push(ins[i].slice(0, ins[i].length - 1) * unit + offset + this.rect.x + this.rect.width / 2);
-                                } else if (code == "y") {
-                                    args.push(((ins[i].slice(0, ins[i].length - 1)) - this.design.height / 2) * unit + this.rect.y + this.rect.height / 2);
-                                } else if (code == " ") {
-                                    args.push(ins[i].slice(0, ins[i].length - 1));
-                                } else {
-                                    args.push(ins[i]);
-                                }
-                            }
-                            ctx[cmd](...args);
-                        }
-                        ctx.fillStyle = this.design.digits[digit]?.[s] ? this.fillMain : this.fillSub;
-                        ctx.shadowBlur = this.design.digits[digit]?.[s] ? 50 : 0;
-                        ctx.shadowColor = ctx.fillStyle;
-                        ctx.fill();
-                        ctx.shadowBlur = 0;
-                        ctx.shadowColor = "";
+                ctx.fillStyle = "#0007";
+                ctx.fillRect(
+                    this.rect.x + this.borderWidth * scale, this.rect.y + this.borderWidth * scale, 
+                    this.rect.width - this.borderWidth * scale * 2, this.rect.height - this.borderWidth * scale * 2
+                );
+
+                let width = Math.round((this.rect.width / scale - this.borderWidth * 2) / this.tileSize);
+                let height = Math.round((this.rect.height / scale - this.borderWidth * 2) / this.tileSize);
+                let area = width * height;
+                let fillArea = this.progress * area;
+
+                let count = 0;
+
+                ctx.strokeStyle = "#0007";
+                ctx.lineWidth = 1 * scale;
+
+                loop:
+                for (let x = 0; x < width; x++) {
+                    for (let y = 0; y < height; y++) {
+                        count++;
+                        if (count > fillArea) break loop;
+                        ctx.fillStyle = "hsl(" + ((time / 20 + (x + y) * 10) % 360) + "deg, 100%, 80%)";
+                        ctx.fillRect(
+                            this.rect.x + (this.borderWidth + this.tileSize * x) * scale, 
+                            this.rect.y + (this.borderWidth + this.tileSize * y) * scale, 
+                            this.tileSize * scale, this.tileSize * scale
+                        );
+                        ctx.strokeRect(
+                            this.rect.x + (this.borderWidth + this.tileSize * x + 0.5) * scale, 
+                            this.rect.y + (this.borderWidth + this.tileSize * y + 0.5) * scale, 
+                            (this.tileSize - 1) * scale, (this.tileSize - 1) * scale
+                        );
                     }
-                    offset -= (this.design.width + this.design.charSpace) * unit;
                 }
             },
+
             ...args
         }
     },
@@ -338,13 +274,17 @@ let controls = {
 
             score: 0n,
             lerpScore: 0,
+            exp: 0n,
+
             cascade: 0,
             powerCascade: 0,
+            
             scorePopups: [],
+
             hint: null,
             hintCooldown: 0,
 
-            pauseTimer: 0,
+            pauseTimer: 1000,
             speed: 1,
 
             __mouseActive: false,
@@ -400,7 +340,8 @@ let controls = {
                                 y: Math.floor(match.hozStart / 100) + .5,
                             },
                             color: this.board.tiles[match.hozStart].type,
-                            score: 50n * 3n ** BigInt(match.hozLength - 3)
+                            score: 50n * 3n ** BigInt(match.hozLength - 3),
+                            exp: 2n * BigInt(match.hozLength) - 3n,
                         });
                         if (match.vetLength) matchScores.push({
                             pos: {
@@ -408,7 +349,8 @@ let controls = {
                                 y: Math.floor(match.vetStart / 100) + match.vetLength / 2,
                             },
                             color: this.board.tiles[match.vetStart].type,
-                            score: 50n * 3n ** BigInt(match.vetLength - 3)
+                            score: 50n * 3n ** BigInt(match.vetLength - 3),
+                            exp: 2n * BigInt(match.vetLength) - 3n,
                         });
 
                         if (powerHoz.length >= 4) powers.push(powerHoz);
@@ -420,7 +362,7 @@ let controls = {
                     }
                 }
 
-                let fallCount = 0;
+                let fallCount = this.board.width * this.board.height;
                 let swaps = {};
                 for (let id of Object.keys(this.board.tiles).reverse()) {
                     let tile = this.board.tiles[id];
@@ -476,7 +418,8 @@ let controls = {
                                     y: Math.floor(id / 100) - (tile.offset.y) + .5, 
                                 },
                                 color: tile.type,
-                                score: tile.animArgs.score
+                                score: tile.animArgs.score,
+                                exp: tile.animArgs.exp
                             })
                             
                             tile.anim = "power-fade";
@@ -513,7 +456,8 @@ let controls = {
                         }
                         tile.offset.y = Math.max(tile.offset.y + tile.velocity.y * delta * this.speed / 1000, limit);
                         tile.velocity.y = tile.offset.y > limit ? tile.velocity.y - delta * this.speed / 30 : Math.max(0, tile.velocity.y);
-                        fallCount ++;
+                    } else {
+                        fallCount --;
                     }
                 }
 
@@ -546,12 +490,12 @@ let controls = {
                                     tTile.trigger = this.board.tiles[tile];
                                     tTile.power = tTile.power ?? "flame";
                                     tTile.animTime = (Math.abs(x - px) + Math.abs(y - py)) / 5 + 1;
-                                    tTile.animArgs = { score: 120n, pause: 500 };
+                                    tTile.animArgs = { score: 120n, exp: 1n, pause: 500 };
                                 } else {
                                     tTile.anim = "power-match";
                                     tTile.trigger = this.board.tiles[tile];
                                     tTile.animTime = (Math.abs(x - px) + Math.abs(y - py)) / 10 + .8;
-                                    tTile.animArgs = { score: 50n, pause: 500 };
+                                    tTile.animArgs = { score: 50n, exp: 1n, pause: 500 };
                                 }
                             }
                         }
@@ -570,7 +514,7 @@ let controls = {
                             if ((x == px || y == py) && py >= -0.5 && (!tTile.anim || tTile.anim == "fade")) {
                                 tTile.anim = "power-match";
                                 tTile.animTime = (Math.abs(x - px) + Math.abs(y - py)) / 10 + .8;
-                                tTile.animArgs = { score: 40n, pause: 500 };
+                                tTile.animArgs = { score: 40n, exp: 1n, pause: 500 };
                                 tTile.trigger = this.board.tiles[tile];
                             }
                         }
@@ -590,7 +534,7 @@ let controls = {
                                 if (Math.abs(y - py) < 1.25) {
                                     tTile.anim = "power-match";
                                     tTile.animTime = tid != tile && tTile.power == "flame" ? 0.2 : 0;
-                                    tTile.animArgs = { score: 20n };
+                                    tTile.animArgs = { score: 20n, exp: 1n };
                                     tTile.trigger = this.board.tiles[tile];
                                 } else if (py - y < 0) {
                                     tTile.velocity.y = Math.max(tTile.velocity.y, 5.5 - Math.abs(x - px) * 0.5);
@@ -613,7 +557,7 @@ let controls = {
                             if ((Math.abs(x - px) < 1.25 || Math.abs(y - py) < 1.25) && py >= -0.5 && (!tTile.anim || tTile.anim == "fade")) {
                                 tTile.anim = "power-match";
                                 tTile.animTime = (Math.abs(x - px) + Math.abs(y - py)) / 10 + .8;
-                                tTile.animArgs = { score: 80n, pause: 500 };
+                                tTile.animArgs = { score: 80n, exp: 1n, pause: 500 };
                                 tTile.trigger = this.board.tiles[tile];
                             }
                         }
@@ -665,6 +609,7 @@ let controls = {
                         powerScores[id].score += BigInt(this.powerCascade);
                         powerScores[id].type = "power";
                         this.score += powerScores[id].score;
+                        this.exp += powerScores[id].exp;
                         this.lerpScore += Number(powerScores[id].score);
                         this.scorePopups.push(powerScores[id]);
                     }
@@ -675,7 +620,9 @@ let controls = {
                     for (let id in matchScores) {
                         this.cascade++;
                         matchScores[id].score *= BigInt(this.cascade);
+                        matchScores[id].exp += BigInt(this.cascade);
                         this.score += matchScores[id].score;
+                        this.exp += matchScores[id].exp;
                         this.lerpScore += Number(matchScores[id].score);
                         this.scorePopups.push(matchScores[id]);
                     }
@@ -729,6 +676,7 @@ let controls = {
                             "fourd": 5n,
                         }
                         let score = 50n * scores[newTile.power] * scores[oldTile.power];
+                        let exp = scores[newTile.power] + scores[oldTile.power] / 2n;
                         
                         let [x, y] = [
                             (oldPos.x + newPos.x) / 2, (oldPos.y + newPos.y) / 2,
@@ -744,7 +692,7 @@ let controls = {
                             if (py >= -0.5 && (!tTile.anim || tTile.anim == "fade")) {
                                 tTile.anim = "power-match";
                                 tTile.animTime = (Math.abs(x - px) + Math.abs(y - py)) / 10 + .8;
-                                tTile.animArgs = { score, pause: 500 };
+                                tTile.animArgs = { score, exp, pause: 500 };
                                 tTile.trigger = newTile;
                             }
                         }
@@ -1095,23 +1043,6 @@ let controls = {
                     popup.time = (popup.time ?? 0) + delta / 2000
                 }
                 ctx.globalAlpha = 1;
-
-                if (this.moves.count == 0 && this.matches.count == 0 && this.fallCount == 0) {
-                    ctx.fillStyle = "#ffffff";
-                    ctx.strokeStyle = "#000000";
-                    ctx.font = "bold " + 70 * scale + "px Arial";
-                    ctx.lineWidth = 10 * scale;
-                    ctx.strokeText(
-                        "NO MORE\nMOVES LOL",
-                        this.rect.x + this.rect.width / 2, 
-                        this.rect.y + this.rect.height / 2, 
-                    );
-                    ctx.fillText(
-                        "NO MORE\nMOVES LOL",
-                        this.rect.x + this.rect.width / 2, 
-                        this.rect.y + this.rect.height / 2, 
-                    );
-                }
             },
             ...args
         }
