@@ -170,7 +170,7 @@ let controls = {
             text: "",
             scale: 16,
             style: "normal",
-            font: "Arial, sans-serif",
+            font: "Helvetica, Arial, sans-serif",
             align: "center",
             wrap: false,
 
@@ -368,7 +368,7 @@ let controls = {
                     let tile = this.board.tiles[id];
                     if (!tile) continue;
                     
-                    tile.lifetime += delta / 1000;
+                    tile.lifetime = (tile.lifetime || 0) + delta / 1000;
 
                     if (tile.swapCheck !== undefined) {
                         if (this.board.tiles[tile.swapCheck]?.swapCheck == id) {
@@ -909,21 +909,13 @@ let controls = {
                         ctx.font = 40 * scale * tScale + "px Arial";
                         
                         if (tile.type < 7) {
+
                             this.drawTile(
                                 tile.type,
                                 this.rect.x + size * (x + offset.x + .54), 
                                 this.rect.y + size * (y - offset.y + .54), 
                                 fade ? "white" : "#000a",
                                 fade ? "white" : "#000a",
-                                size * tScale, 
-                            );
-
-                            this.drawTile(
-                                tile.type,
-                                this.rect.x + size * (x + offset.x + .5), 
-                                this.rect.y + size * (y - offset.y + .5), 
-                                fade ? "white" : "#ddd",
-                                fade ? "black" : colors[tile.type],
                                 size * tScale, 
                             );
                                 
@@ -933,8 +925,8 @@ let controls = {
                                 for (let a = 0; a < 5; a++) {
                                     this.drawTile(
                                         tile.type,
-                                        this.rect.x + size * (x + offset.x + .4625 + Math.random() * .075), 
-                                        this.rect.y + size * (y - offset.y + .4625 + Math.random() * .075), 
+                                        this.rect.x + size * (x + offset.x + .45 + Math.random() * .1), 
+                                        this.rect.y + size * (y - offset.y + .45 + Math.random() * .1), 
                                         "#ddf7",
                                         "#0000",
                                         size * tScale * 1.1, 
@@ -946,11 +938,52 @@ let controls = {
                                         tile.type,
                                         this.rect.x + size * (x + offset.x + .5), 
                                         this.rect.y + size * (y - offset.y + .5), 
-                                        "#fd87",
+                                        "#fa37",
                                         "#0000",
                                         size * tScale * (1.1 + Math.sin(tile.lifetime * 1.2 ** a) * (.1 + a * .01)), 
                                     );
                                 }
+                            }
+
+                            this.drawTile(
+                                tile.type,
+                                this.rect.x + size * (x + offset.x + .5), 
+                                this.rect.y + size * (y - offset.y + .5), 
+                                fade ? "white" : "#ddd",
+                                fade ? "black" : colors[tile.type],
+                                size * tScale, 
+                            );
+                        } else {
+                            if (tile.power == "cube") {
+
+                                for (let a = (tile.lifetime / 4 % .2); a < 2; a += 0.2) {
+                                    this.drawTile(
+                                        Math.floor(tile.lifetime * 5 - a * 20) % 7,
+                                        this.rect.x + size * (x + offset.x + .5), 
+                                        this.rect.y + size * (y - offset.y + .5), 
+                                        "hsla(" + (((tile.lifetime + a * 2) * 100) % 360) + "deg, 100%, 70%, " + a * 0.5 + ")",
+                                        "rgba(0, 0, 0, " + a * 0.5 + ")",
+                                        size * tScale * (1 + (1 - a)), 
+                                    );
+                                }
+
+                                this.drawTile(
+                                    0,
+                                    this.rect.x + size * (x + offset.x + .54), 
+                                    this.rect.y + size * (y - offset.y + .54), 
+                                    fade ? "white" : "#000a",
+                                    fade ? "white" : "#000a",
+                                    size * tScale, 
+                                );
+                                
+                                this.drawTile(
+                                    0,
+                                    this.rect.x + size * (x + offset.x + .5), 
+                                    this.rect.y + size * (y - offset.y + .5), 
+                                    "hsl(" + ((tile.lifetime * 100) % 360) + "deg, 100%, 70%)",
+                                    "#000",
+                                    size * tScale, 
+                                );
                             }
                         }
 
@@ -958,7 +991,7 @@ let controls = {
                             let icon = {
                                 star: "",
                                 flame: "",
-                                cube: "⬛",
+                                cube: "",
                                 nova: "🌌",
                                 sphere: "🔴",
                                 fourd: "E",
@@ -1090,9 +1123,9 @@ let controls = {
                 let p = 0;
                 for (let x = 0; x < this.board.width; x++) {
                     for (let y = 0; y < this.board.height; y++) {
-                        let tile = this.board.get(x, y) || {};
+                        let tile = this.board.get(x, y) || { lifetime: 0 };
                         tile.type = +(data.board[p]);
-                        tile.power = powers[data.board[p + 1]];
+                        tile.power = powers[data.board[p + 1]] || "";
                         tile.offset = { x: 0, y: 0 };
                         this.board.tiles[x + y * 100] = tile;
                         p += 2;

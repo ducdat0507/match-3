@@ -43,6 +43,7 @@ function loop() {
     ctx.fillRect(0, 0, width, height);
 
     updateAnimations();
+    updateInMouseState(scene.controls);
     renderControls(scene.controls, { x: 0, y: 0, width, height });
 
     strain = Date.now() - time;
@@ -66,32 +67,58 @@ function renderControls(cts, rect, alpha = 1) {
 }
 
 let pointers = {};
+let mousePos = { x: 0, y: 0 }
+let lastArgs;
 
-function doPointerEvent(pos, cts, event, args) {
-    for (let ct of cts) {
+function updateInMouseState(cts, args) {
+    let did = false;
+    for (let ct of cts.toReversed()) {
         if (ct.clickthrough) continue;
 
-        if (pos.x >= ct.rect.x && pos.y >= ct.rect.y
-            && pos.x <= ct.rect.x + ct.rect.width
-            && pos.y <= ct.rect.y + ct.rect.height) {
-            ct[event](pos, args);
+        if (!did && mousePos.x >= ct.rect.x && mousePos.y >= ct.rect.y
+            && mousePos.x <= ct.rect.x + ct.rect.width
+            && mousePos.y <= ct.rect.y + ct.rect.height) {
             if (!ct.__mouseIn) {
-                ct.onpointerin(pos, args);
+                ct.onpointerin(mousePos, lastArgs);
                 ct.__mouseIn = true;
             }
+            did = true;
         } else {
             if (ct.__mouseIn) {
-                ct.onpointerout(pos, args);
+                ct.onpointerout(mousePos, lastArgs);
                 ct.__mouseIn = false;
             }
         }
 
-        if (ct.controls.length) doPointerEvent(pos, ct.controls, event, args);
+        if (ct.controls.length) {
+            if (updateInMouseState(ct.controls)) did = true;
+        }
     }
+    return did;
+}
+
+function doPointerEvent(pos, cts, event, args) {
+    let did = false;
+    for (let ct of cts.toReversed()) {
+        if (ct.clickthrough) continue;
+
+        if (!did && pos.x >= ct.rect.x && pos.y >= ct.rect.y
+            && pos.x <= ct.rect.x + ct.rect.width
+            && pos.y <= ct.rect.y + ct.rect.height) {
+            ct[event](pos, args);
+            did = true;
+        }
+
+        if (ct.controls.length) {
+            if (doPointerEvent(pos, ct.controls, event, args)) did = true;
+        }
+    }
+    return did;
 }
 
 function doMouseEvent(e, type) {
-    let pos = { x: e.clientX, y: e.clientY };
+    let pos = mousePos = { x: e.clientX, y: e.clientY };
+    lastArgs = e;
     doPointerEvent(pos, scene.controls, type, e);
     e.preventDefault();
     e.stopPropagation();
@@ -99,8 +126,9 @@ function doMouseEvent(e, type) {
 }
 function doTouchEvent(e, type) {
     for (let touch of e.changedTouches) {
-        let pos = { x: touch.clientX, y: touch.clientY };
+        let pos = mousePos = { x: touch.clientX, y: touch.clientY };
         touch.touches = e.touches;
+        lastArgs = touch;
         doPointerEvent(pos, scene.controls, type, touch);
     }
     e.preventDefault();

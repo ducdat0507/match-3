@@ -48,6 +48,27 @@ screens.game = function () {
         text: "Hint",
     }), "text")
 
+    // The menu button
+    scene.append(controls.button({
+        position: Ex(-10000, -10000),
+        size: Ex(180, 60),
+        fill: "#aaa7",
+        onclick() {
+            popups.gamemenu();
+        }
+    }), "menubtn")
+    scene.$menubtn.append(controls.rect({
+        position: Ex(2, 2),
+        size: Ex(-4, -4, 100, 100),
+        fill: "#000a",
+    }), "fill")
+    scene.$menubtn.append(controls.label({
+        position: Ex(0, 0, 50, 50),
+        scale: 25,
+        style: "italic",
+        text: "Menu",
+    }), "text")
+
     // The progress bar
     scene.append(controls.gembar({
         position: Ex(-10000, -10000),
@@ -66,15 +87,17 @@ screens.game = function () {
     }), "board")
 
     // The splash text
-    scene.append(controls.label({
+    scene.$board.append(controls.label({
         position: Ex(0, 0, 50, 50),
         scale: 50,
         stroke: "black",
         style: "900",
+        thickness: 8,
+        wrap: true,
     }), "splash")
 
 
-    var introFactor = 0;
+    var introFactor = 1;
     let isAnimating = false;
     let waiter = 0;
     
@@ -92,20 +115,26 @@ screens.game = function () {
                 scene.$scorebox.position = Ex(-450, -300, 50, 50);
                 scene.$scorebox.size = Ex(280, 100);
                 scene.$score.position = Ex(-310, -265, 50, 50);
+                scene.$score.scale = 30;
                 scene.$level.position = Ex(-310, -230, 50, 50);
                 scene.$level.scale = 20;
                 scene.$hintbtn.position = Ex(-390, 90, 50, 50);
                 scene.$hintbtn.size = Ex(180, 120);
+                scene.$menubtn.position = Ex(-390, 230, 50, 50);
+                scene.$menubtn.size = Ex(180, 60);
                 scene.$progress.position = Ex(-150, 280, 50, 50);
                 scene.$board.position = Ex(-150, -320, 50, 50);
             } else {
                 scene.$scorebox.position = Ex(-300, -380, 50, 50);
                 scene.$scorebox.size = Ex(600, 60),
                 scene.$score.position = Ex(-150, -350, 50, 50);
+                scene.$score.scale = 25;
                 scene.$level.position = Ex(150, -350, 50, 50);
-                scene.$level.scale = 30;
+                scene.$level.scale = 25;
                 scene.$hintbtn.position = Ex(-90, 210, 50, 65);
                 scene.$hintbtn.size = Ex(180, 60);
+                scene.$menubtn.position = Ex(-270, 210, 50, 65);
+                scene.$menubtn.size = Ex(150, 60);
                 scene.$progress.position = Ex(-300, 280, 50, 50);
                 scene.$board.position = Ex(-300, -320, 50, 50);
             }
@@ -116,6 +145,7 @@ screens.game = function () {
                 scene.$score.position.ex -= 100 * introFactor;
                 scene.$level.position.ex -= 100 * introFactor;
                 scene.$hintbtn.position.ex -= 100 * introFactor;
+                scene.$menubtn.position.ex -= 100 * introFactor;
                 scene.$progress.position.ex += 100 * introFactor;
                 scene.$board.position.ex += 100 * introFactor;
             }
@@ -156,14 +186,15 @@ screens.game = function () {
                 : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1;
         }
         function anim1(x) {
-            scene.$splash.scale = 50 * bounce(x / 3000);
-            scene.$splash.alpha = 3 - x / 1000;
+            scene.$board.$splash.scale = 50 * bounce(x / 3000);
+            scene.$board.$splash.size.x = 10 * scene.$board.$splash.scale;
+            scene.$board.$splash.alpha = 3 - x / 1000;
             if (x >= 3000) {
                 return true;
             }
         }
 
-        scene.$splash.text = text;
+        scene.$board.$splash.text = text;
         startAnimation(anim1);
     }
 

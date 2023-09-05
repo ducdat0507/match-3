@@ -38,7 +38,7 @@ screens.main = function () {
 
     while (true) {
         level = game.stats.level - 1n;
-        goal = 2000n + 495n * level + 5n * level * level;
+        goal = 2000n + 975n * level + 25n * level * level;
         if (game.stats.exp >= goal) {
             game.stats.exp -= goal;
             game.stats.level ++;
