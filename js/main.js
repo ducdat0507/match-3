@@ -99,7 +99,7 @@ function updateInMouseState(cts, args) {
 
 function doPointerEvent(pos, cts, event, args) {
     let did = false;
-    for (let ct of cts.toReversed()) {
+    for (let ct of [...cts].reverse()) {
         if (ct.clickthrough) continue;
 
         if (!did && pos.x >= ct.rect.x && pos.y >= ct.rect.y
