@@ -872,7 +872,7 @@ let controls = {
 
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
-                ctx.font = 32 * scale + "px Arial";
+                ctx.font = 32 * scale + "px Helvetica, Arial, sans-serif";
                 ctx.lineWidth = 5 * scale;
 
                 function ease(x) {
@@ -906,7 +906,7 @@ let controls = {
                             offset.y += Math.random() * .1 - .05;
                         }
 
-                        ctx.font = 40 * scale * tScale + "px Arial";
+                        ctx.font = 40 * scale * tScale + "px Helvetica, Arial, sans-serif";
                         
                         if (tile.type < 7) {
 
@@ -1053,7 +1053,7 @@ let controls = {
                     let tScale = ease(Math.min(popup.time ?? 0, 1)) * scale;
                     if (popup.type == "power") tScale *= .75;
                     ctx.globalAlpha = Math.min(2 - popup.time * 2, 1);
-                    ctx.font = "bold " + 40 * tScale + "px Arial";
+                    ctx.font = "bold " + 40 * tScale + "px Helvetica, Arial, sans-serif";
                     ctx.strokeStyle = colors[popup.color] + "77";
                     ctx.lineWidth = (popup.type == "power" ? 8 : 10) * tScale;
                     ctx.strokeText(
