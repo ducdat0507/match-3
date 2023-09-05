@@ -34,6 +34,17 @@ screens.main = function () {
         modeButtons.push(button);
     }
 
+    let level, goal;
+
+    while (true) {
+        level = game.stats.level - 1n;
+        goal = 2000n + 495n * level + 5n * level * level;
+        if (game.stats.exp >= goal) {
+            game.stats.exp -= goal;
+            game.stats.level ++;
+        } else break;
+    }
+
     function decideMode(mode) {
         currentMode = mode;
         startAnimation(x => {
@@ -50,12 +61,45 @@ screens.main = function () {
                     button.alpha = 1 - clamp01(ease.cubic.out(x / 200));
                 }
             }
+            scene.$progress.position.y = -94 + clamp01(ease.quint.out(x / 1000)) * 200;
             if (x >= 2500) loadScreen("game");
             return x >= 2500;
         })
     }
 
     makeModeButton("endless",     "ENDLESS",    Ex(0, 0));
+    
+
+    scene.append(controls.gembar({
+        position: Ex(-170, -96, 50, 100),
+        size: Ex(440, 56),
+        fill: "#555a",
+        progress: Number(game.stats.exp) / Number(goal)
+    }), "progress")
+    scene.$progress.append(controls.rect({
+        position: Ex(-100, 0),
+        size: Ex(100, 0, 0, 100),
+        fill: "#555a",
+    }), "rankbox")
+    scene.$progress.append(controls.label({
+        position: Ex(-50, 30),
+        text: game.stats.level.toLocaleString("en-US"),
+        scale: 25,
+    }), "rank")
+    scene.$progress.append(controls.label({
+        position: Ex(-100, -20),
+        align: "left",
+        text: "Player",
+        scale: 25,
+    }), "name")
+    scene.$progress.append(controls.label({
+        position: Ex(0, -20, 100),
+        align: "right",
+        style: "italic",
+        text: titles[level] || titles[titles.count - 1],
+        scale: 25,
+    }), "title")
+
 
     let isAnimating = true;
 
@@ -63,7 +107,10 @@ screens.main = function () {
         for (let a in modeButtons) {
             modeButtons[a].position.ey = 150 - clamp01(ease.cubic.out((x - 20 * a) / 1000)) * 100;
         }
-        if (x >= 980 + 20 * modeButtons.length) isAnimating = false;
-        return x >= 980 + 20 * modeButtons.length;
+        scene.$progress.position.y = 104 - clamp01(ease.cubic.out((x - 250) / 1000)) * 200;
+
+        let length = Math.max(980 + 20 * modeButtons.length, 1250)
+        if (x >= length) isAnimating = false;
+        return x >= length;
     });
 }

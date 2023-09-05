@@ -2,7 +2,7 @@ screens.game = function () {
 
     // The Score
     scene.append(controls.rect({
-        position: Ex(-300, -310, 50, 50),
+        position: Ex(-10000, -10000),
         size: Ex(180, 60),
         text: 0,
         fill: "#555a",
@@ -13,19 +13,19 @@ screens.game = function () {
         fill: "#555a",
     }), "fill")
     scene.append(controls.label({
-        position: Ex(-300, -310, 50, 50),
+        position: Ex(-10000, -10000),
         scale: 30,
         text: 0,
     }), "score")
     scene.append(controls.label({
-        position: Ex(-300, -310, 50, 50),
+        position: Ex(-10000, -10000),
         scale: 20,
         text: 0,
     }), "level")
 
     // The hint button
     scene.append(controls.button({
-        position: Ex(110, 310, 50, 50),
+        position: Ex(-10000, -10000),
         size: Ex(180, 60),
         fill: "#aaa7",
         onclick() {
@@ -50,14 +50,14 @@ screens.game = function () {
 
     // The progress bar
     scene.append(controls.gembar({
-        position: Ex(-300, 280, 50, 50),
+        position: Ex(-10000, -10000),
         size: Ex(600, 40),
         fill: "#555a",
     }), "progress")
 
     // The board
     scene.append(controls.board({
-        position: Ex(-300, -320, 50, 50),
+        position: Ex(-10000, -10000),
         size: Ex(600, 600),
         data: {
             level: 1n,
