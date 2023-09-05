@@ -1,6 +1,6 @@
 let titles = [
     "Novice",
-    "Appentice",
+    "Apprentice",
     "Swapper",
     "Senior Swapper",
     "Matcher",
