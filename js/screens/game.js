@@ -54,7 +54,7 @@ screens.game = function () {
         size: Ex(180, 60),
         fill: "#aaa7",
         onclick() {
-            popups.gamemenu();
+            if (!isAnimating) popups.gamemenu();
         }
     }), "menubtn")
     scene.$menubtn.append(controls.rect({
