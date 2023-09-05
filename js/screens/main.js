@@ -35,6 +35,7 @@ screens.main = function () {
     }
 
     function decideMode(mode) {
+        currentMode = mode;
         startAnimation(x => {
             for (let button of modeButtons) {
                 button.clickthrough = true;
@@ -55,7 +56,6 @@ screens.main = function () {
     }
 
     makeModeButton("endless",     "ENDLESS",    Ex(0, 0));
-    makeModeButton("endless2",    "MORE MODES COMING SOON...",    Ex(0, 200));
 
     let isAnimating = true;
 

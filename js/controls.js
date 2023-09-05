@@ -1044,7 +1044,62 @@ let controls = {
                 }
                 ctx.globalAlpha = 1;
             },
-            ...args
+            save() {
+                let data = {
+                    score: this.score,
+                    exp: this.exp,
+                    data: this.data,
+                    board: "",
+                }
+
+                let powers = {
+                    star: "A",
+                    flame: "B",
+                    cube: "C",
+                    nova: "D",
+                    sphere: "E",
+                    fourd: "F",
+                };
+
+                for (let x = 0; x < this.board.width; x++) {
+                    for (let y = 0; y < this.board.height; y++) {
+                        let tile = this.board.get(x, y);
+                        data.board += tile.type.toString()[0] + (powers[tile.power] || "_")
+                    }
+                }
+                game.boards[currentMode] = data;
+                save();
+            },
+            load() {
+                let data = game.boards[currentMode];
+                if (!data) return;
+
+                this.score = BigInt(data.score);
+                this.exp = BigInt(data.exp);
+                this.data = deepCopy(data.data, this.data);
+
+                let powers = {
+                    A: "star",
+                    B: "flame",
+                    C: "cube",
+                    D: "nova",
+                    E: "sphere",
+                    F: "fourd",
+                };
+
+                let p = 0;
+                for (let x = 0; x < this.board.width; x++) {
+                    for (let y = 0; y < this.board.height; y++) {
+                        let tile = this.board.get(x, y) || {};
+                        tile.type = +(data.board[p]);
+                        tile.power = powers[data.board[p + 1]];
+                        tile.offset = { x: 0, y: 0 };
+                        this.board.tiles[x + y * 100] = tile;
+                        p += 2;
+                    }
+                }
+            },
+            ...args,
         }
     }
 }

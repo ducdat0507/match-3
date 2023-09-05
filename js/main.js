@@ -8,10 +8,9 @@ function init() {
     bindPointerEvent("onpointermove", "mousemove", "touchmove");
     bindPointerEvent("onpointerup", "mouseup", "touchend");
     window.oncontextmenu = e => false;
-    // load();
-
+    
+    load();
     loadRes();
-
     loadScreen("intro");
 
     loop();
@@ -25,6 +24,8 @@ let strain = 0;
 let scene = controls.base();
 let screens = {}
 let scale = 1;
+
+let currentMode = "";
 
 function loop() {
     delta = Date.now() - time;

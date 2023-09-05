@@ -59,7 +59,9 @@ screens.game = function () {
     scene.append(controls.board({
         position: Ex(-300, -320, 50, 50),
         size: Ex(600, 600),
-        level: 1n,
+        data: {
+            level: 1n,
+        },
         clickthrough: true
     }), "board")
 
@@ -81,9 +83,9 @@ screens.game = function () {
             scene.$score.text = (scene.$board.score - BigInt(Math.round(scene.$board.lerpScore))).toLocaleString("en-US");
             scene.$hintbtn.$fill.$bar.size = Ex(0, 0, Math.min(Math.max(scene.$board.hintCooldown / 5000, 0), 1) * 100, 100);
 
-            let level = Number(scene.$board.level) - 1;
+            let level = Number(scene.$board.data.level) - 1;
             let goal = Math.min(250 + 150 * level, 1500);
-            scene.$level.text = "Level " + scene.$board.level.toLocaleString("en-US");
+            scene.$level.text = "Level " + scene.$board.data.level.toLocaleString("en-US");
             scene.$progress.progress += (Number(scene.$board.exp) / goal - scene.$progress.progress) * (1 - 0.01 ** (delta / 1000));
 
             if (window.innerWidth / scale >= 1000) {
@@ -118,11 +120,15 @@ screens.game = function () {
                 scene.$board.position.ex += 100 * introFactor;
             }
 
-            if (!isAnimating && scene.$board.fallCount == 0 && Number(scene.$board.exp) >= goal) {
+            if (scene.$board.fallCount == 0) {
                 waiter++;
-                if (waiter >= 2) {
-                    isAnimating = true;
-                    levelUp();
+                if (waiter == 2) {
+                    if (!isAnimating && Number(scene.$board.exp) >= goal) {
+                        isAnimating = true;
+                        levelUp();
+                    } else {
+                        scene.$board.save();
+                    }
                 }
             } else {
                 waiter = 0;
@@ -165,10 +171,13 @@ screens.game = function () {
         function anim1(x) {
             introFactor = ease.quart.in(clamp01((x - 1000) / 1000));
             if (x >= 2500) {
-                scene.$board.level++;
+                scene.$board.data.level++;
+                game.stats.exp += scene.$board.exp;
+                game.stats.totalExp += scene.$board.exp;
                 scene.$board.exp = 0n;
+                scene.$board.save();
                 startAnimation(intro);
-                setTimeout(() => splash("LEVEL " + scene.$board.level.toLocaleString("en-US")), 2000);
+                setTimeout(() => splash("LEVEL " + scene.$board.data.level.toLocaleString("en-US")), 2000);
                 return true;
             }
         }
@@ -178,6 +187,7 @@ screens.game = function () {
         startAnimation(anim1);
     }
 
+    scene.$board.load();
     scene.$logic.onupdate();
     startAnimation(intro);
     setTimeout(() => splash("GO"), 2000);
