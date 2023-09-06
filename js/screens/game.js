@@ -98,7 +98,7 @@ screens.game = function () {
 
 
     var introFactor = 1;
-    let isAnimating = false;
+    let isAnimating = true;
     let waiter = 0;
     
     scene.append(controls.base({
@@ -186,6 +186,7 @@ screens.game = function () {
                 : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1;
         }
         function anim1(x) {
+            if (!scene.$board) return true;
             scene.$board.$splash.scale = 50 * bounce(x / 3000);
             scene.$board.$splash.size.x = 10 * scene.$board.$splash.scale;
             scene.$board.$splash.alpha = 3 - x / 1000;

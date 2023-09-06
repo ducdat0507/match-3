@@ -1,42 +1,27 @@
-popups.gamemenu = function () {
-    let popup = doPopup();
-    let button;
+popups.gamemenu = function (parent) {
+    if (popupAnim) return;
 
-    popup.$content.append(button = controls.button({
-        position: Ex(30, -30, 0, 75),
-        size: Ex(-60, 60, 100),
-        fill: "#aaa7",
-        onclick() {
-            popup.close();
-        }
-    }), "continue")
-    button.append(controls.rect({
-        position: Ex(2, 2),
-        size: Ex(-4, -4, 100, 100),
-        fill: "#000a",
-    }), "fill")
-    button.append(controls.label({
-        position: Ex(0, 0, 50, 50),
-        scale: 25,
-        text: "Continue",
-    }), "text")
-
-    popup.$content.append(button = controls.button({
+    let popup = doPopup(parent);
+    popup.$title.text = "Menu";
+    
+    ButtonWithText(popup.$content, {
         position: Ex(30, 40, 0, 75),
         size: Ex(-60, 60, 100),
-        fill: "#aaa7",
-        onclick() {
-            loadScreen("main");
-        }
-    }), "lobby")
-    button.append(controls.rect({
-        position: Ex(2, 2),
-        size: Ex(-4, -4, 100, 100),
-        fill: "#000a",
-    }), "fill")
-    button.append(controls.label({
-        position: Ex(0, 0, 50, 50),
-        scale: 25,
-        text: "Return to Main Menu",
-    }), "text")
+    }, "How to Play", () => {
+        popups.help(popup);
+    });
+    
+    ButtonWithText(popup.$content, {
+        position: Ex(30, 120, 0, 75),
+        size: Ex(-40, 60, 50),
+    }, "Main Menu", () => {
+        loadScreen("main");
+    });
+
+    ButtonWithText(popup.$content, {
+        position: Ex(10, 120, 50, 75),
+        size: Ex(-40, 60, 50),
+    }, "Continue →", () => {
+        popup.close();
+    });
 }

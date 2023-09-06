@@ -24,7 +24,7 @@ function Board(args = {}) {
                 for (let y = cy; y >= 0; y--) {
                     if (this.tiles[x + y * 100]) {
                         check &&= !["fade", "power-fade"].includes(this.tiles[x + y * 100].anim);
-
+                        
                         if (this.tiles[x + y * 100].anim || this.tiles[x + y * 100].swapCheck !== undefined) {
                             cy = y - 1;
                         } else {
@@ -286,4 +286,24 @@ function Board(args = {}) {
     }
 
     return board;
+}
+
+function ButtonWithText(parent, args, text, onclick, id) {
+    let button;
+    parent.append(button = controls.button({
+        fill: "#aaa7",
+        onclick,
+        ...args
+    }), id)
+    button.append(controls.rect({
+        position: Ex(2, 2),
+        size: Ex(-4, -4, 100, 100),
+        fill: "#000a",
+    }), "fill")
+    button.append(controls.label({
+        position: Ex(0, 0, 50, 50),
+        scale: 25,
+        text,
+    }), "text")
+    return button;
 }

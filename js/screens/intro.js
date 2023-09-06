@@ -1,13 +1,13 @@
 screens.intro = function () {
 
     scene.append(controls.label({
-        position: Ex(0, -100, 50, 45),
-        size: Ex(600, 0),
+        position: Ex(-300, -100, 50, 45),
+        size: Ex(500, 0),
         scale: 70,
-        text: "YET ANOTHER MATCH-3 CLONE",
-        font: "'Trebuchet MS'",
-        style: "italic 900",
+        text: "Yet Another Match-3 Clone",
+        style: "900",
         wrap: true,
+        align: "left",
         alpha: 0,
     }), "title")
 
@@ -40,8 +40,9 @@ screens.intro = function () {
         },
         onupdate() {
             let tWidth = Math.min(window.innerWidth / scale, 1000);
-            scene.$title.scale = tWidth / 10;
-            scene.$title.size = Ex(tWidth, 0);
+            scene.$title.scale = tWidth / 9;
+            scene.$title.size = Ex(tWidth * 0.8, 0);
+            scene.$title.position.x = -tWidth * 0.4;
 
             scene.$action.position.y = 50 + Math.sin(time / 1000) * 10;
         }

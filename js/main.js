@@ -70,8 +70,8 @@ let pointers = {};
 let mousePos = { x: 0, y: 0 }
 let lastArgs;
 
-function updateInMouseState(cts, args) {
-    let did = false;
+function updateInMouseState(cts, did = false) {
+    let did2 = did;
     for (let ct of [...cts].reverse()) {
         if (ct.clickthrough) continue;
 
@@ -91,14 +91,16 @@ function updateInMouseState(cts, args) {
         }
 
         if (ct.controls.length) {
-            if (updateInMouseState(ct.controls)) did = true;
+            if (updateInMouseState(ct.controls, did2)) did = true;
         }
+
+        did2 = did;
     }
     return did;
 }
 
-function doPointerEvent(pos, cts, event, args) {
-    let did = false;
+function doPointerEvent(pos, cts, event, args, did = false) {
+    let did2 = did;
     for (let ct of [...cts].reverse()) {
         if (ct.clickthrough) continue;
 
@@ -110,8 +112,10 @@ function doPointerEvent(pos, cts, event, args) {
         }
 
         if (ct.controls.length) {
-            if (doPointerEvent(pos, ct.controls, event, args)) did = true;
+            if (doPointerEvent(pos, ct.controls, event, args, did2)) did = true;
         }
+
+        did2 = did;
     }
     return did;
 }
