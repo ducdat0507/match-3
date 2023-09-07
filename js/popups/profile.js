@@ -49,7 +49,7 @@ popups.profile = function (parent) {
         scale: 25,
     }), "title")
     popup.$content.$progress.append(controls.label({
-        position: Ex(0, 35, 50, 100),
+        position: Ex(0, 30, 50, 100),
         text: (goal - game.stats.exp).toLocaleString("en-US") + " XP to next level",
         scale: 25,
     }), "goal")
