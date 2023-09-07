@@ -319,6 +319,7 @@ let controls = {
                     let match = this.matches[id];
                     let matchable = true;
                     let tiles = {};
+                    let manual = false;
 
                     let powerHoz = [];
                     if (match.hozLength) {
@@ -327,6 +328,7 @@ let controls = {
                             matchable &&= tile && !tile.offset.y && !tile.anim;
                             tiles[match.hozStart + c] = (tiles[match.hozStart + c] ?? 0) + 1;
                             if (tile && tile.swapCheck !== undefined) {
+                                manual = true;
                                 powerHoz.unshift(match.hozStart + c);
                                 this.board.tiles[match.hozStart + c].isMatch = true;
                             } else {
@@ -342,6 +344,7 @@ let controls = {
                             matchable &&= tile && !tile.offset.y && !tile.anim;
                             tiles[match.vetStart + c * 100] = (tiles[match.vetStart + c * 100] ?? 0) + 1;
                             if (tile && tile.swapCheck !== undefined) {
+                                manual = true;
                                 powerVet.unshift(match.vetStart + c * 100);
                                 this.board.tiles[match.vetStart + c * 100].isMatch = true;
                             } else {
@@ -360,6 +363,7 @@ let controls = {
                             color: this.board.tiles[match.hozStart].type,
                             score: 50n * 3n ** BigInt(match.hozLength - 3),
                             exp: 2n * BigInt(match.hozLength) - 3n,
+                            manual
                         });
                         if (match.vetLength) matchScores.push(popup = {
                             pos: {
@@ -369,6 +373,7 @@ let controls = {
                             color: this.board.tiles[match.vetStart].type,
                             score: 50n * 3n ** BigInt(match.vetLength - 3),
                             exp: 2n * BigInt(match.vetLength) - 3n,
+                            manual
                         });
 
                         if (powerHoz.length >= 4) powers.push(powerHoz);
@@ -381,22 +386,18 @@ let controls = {
                     }
                 }
 
-                let fallCount = this.board.width * this.board.height;
-                let swaps = {};
                 let swapChecked = {};
-                for (let id of Object.keys(this.board.tiles).reverse()) {
+                for (let id in this.board.tiles) {
                     let tile = this.board.tiles[id];
                     if (!tile) continue;
-                    
-                    tile.lifetime = (tile.lifetime || 0) + delta / 1000;
 
-                    if (tile.swapCheck !== undefined && !swapChecked[id]) {
+                    if (tile.swapCheck !== undefined) {
                         let swapid = tile.swapCheck;
                         let swap = this.board.tiles[tile.swapCheck];
                         swapChecked[swapid] = true;
 
                         if (swap?.swapCheck == id && !this.anim && !swap.anim) {
-                            if (!tile.isMatch && !swap.isMatch) {
+                            if (!swapChecked[id] && !tile.isMatch && !swap.isMatch) {
                                 tile.anim = "swap";
                                 tile.animTime = 1e-6;
                                 tile.animArgs = { 
@@ -415,23 +416,34 @@ let controls = {
                                         y: Math.floor(id / 100) - Math.floor(tile.swapCheck / 100), 
                                     }
                                 };
-                                delete this.board.tiles[swapid].swapCheck;
-                                delete this.board.tiles[id].swapCheck;
+                                delete tile.swapCheck;
+                                delete swap.swapCheck;
                             }
                             
-                            delete this.board.tiles[swapid].isMatch;
-                            delete this.board.tiles[id].isMatch;
+                            delete tile.isMatch;
+                            delete swap.isMatch;
                         } else {
-                            delete this.board.tiles[swapid]?.swapCheck;
-                            delete this.board.tiles[id].swapCheck;
+                            delete tile.swapCheck;
+                            delete swap?.swapCheck;
                         }
                     } 
+                }
+                    
+
+                let fallCount = this.board.width * this.board.height;
+                let swaps = {};
+                for (let id of Object.keys(this.board.tiles).reverse()) {
+                    let tile = this.board.tiles[id];
+                    if (!tile) continue;
+                    
+                    tile.lifetime = (tile.lifetime || 0) + delta / 1000;
                     
                     if (tile.anim == "fade") {
                         tile.animTime += delta / (tile.animArgs.manual ? 250 : 500);
                         if (tile.animTime >= 1) {
                             if (tile.swapCheck !== undefined) {
                                 delete this.board.tiles[tile.swapCheck]?.swapCheck;
+                                delete tile.swapCheck;
                             }
                             this.board.tiles[id] = null;
                             matched = true;
@@ -439,9 +451,6 @@ let controls = {
                     } else if (tile.anim == "power-fade") {
                         tile.animTime += delta / 500;
                         if (tile.animTime >= 1) {
-                            if (tile.swapCheck !== undefined) {
-                                delete this.board.tiles[tile.swapCheck]?.swapCheck;
-                            }
                             this.board.tiles[id] = null;
                             matched = true;
                         }
@@ -449,7 +458,6 @@ let controls = {
                         tile.animTime -= delta / 1000;
                         if (tile.animArgs.pause) this.pauseTimer = Math.max(this.pauseTimer, tile.animArgs.pause);
                         if (tile.animTime <= 0) {
-                            console.log(tile.animArgs);
                             if (tile.animArgs.score) powerScores.push({
                                 pos: {
                                     x: (id % 100) + (tile.offset.x) + .5, 
@@ -465,11 +473,6 @@ let controls = {
                             tile.animTime = 0;
                             tile.animArgs = { manual: false };
 
-                            if (tile.swapCheck !== undefined) {
-                                delete this.board.tiles[tile.swapCheck]?.swapCheck;
-                                delete tile.swapCheck;
-                            }
-
                             matchTiles[id] = matchTiles[id] ?? 1;
                         }
                     } else if (tile.anim == "transform") {
@@ -478,10 +481,6 @@ let controls = {
                             delete tile.anim;
                             delete tile.animTime;
                             delete tile.animArgs;
-                            if (tile.swapCheck !== undefined) {
-                                delete this.board.tiles[tile.swapCheck]?.swapCheck;
-                                delete tile.swapCheck;
-                            }
                         }
                     } else if (tile.anim == "swap") {
                         tile.animTime += delta / 250;
@@ -522,7 +521,9 @@ let controls = {
                         tile.counted = true;
                     }
 
-                    if (tile.type == 7) {
+                    if (tile.trigger == tile) {
+
+                    } if (tile.type == 7) {
                         let power = tile.power;
                         let type = tile.trigger.type;
                         let [x, y] = [
@@ -532,7 +533,7 @@ let controls = {
                         
                         let popup = tile.popup;
                         if (!popup) this.scorePopups.push(popup = {
-                            pos: { x: x + 0.5, y: y + 0.5 },
+                            pos: { x: +x + 0.5, y: +y + 0.5 },
                             color: type,
                             score: 0n,
                             exp: 0n,
@@ -571,7 +572,7 @@ let controls = {
 
                         let popup = tile.popup;
                         if (!popup) this.scorePopups.push(popup = {
-                            pos: { x: x + 0.5, y: y + 0.5 },
+                            pos: { x: +x + 0.5, y: +y + 0.5 },
                             color: tile.type,
                             score: 0n,
                             exp: 0n,
@@ -599,7 +600,7 @@ let controls = {
 
                         let popup = tile.popup;
                         if (!popup) this.scorePopups.push(popup = {
-                            pos: { x: x + 0.5, y: y + 0.5 },
+                            pos: { x: +x + 0.5, y: +y + 0.5 },
                             color: tile.type,
                             score: 0n,
                             exp: 0n,
@@ -615,7 +616,7 @@ let controls = {
                             if (Math.abs(x - px) < 1.25 && (!tTile.anim || tTile.anim == "fade")) {
                                 if (Math.abs(y - py) < 1.25) {
                                     tTile.anim = "power-match";
-                                    tTile.animTime = tid != id && tTile.power == "flame" ? 0.2 : 0;
+                                    tTile.animTime = tid != id && tTile.power == "flame" ? 0.25 : 0;
                                     tTile.animArgs = { score: 20n, exp: 1n, popup };
                                     tTile.trigger = tile;
                                 } else if (py - y < 0) {
@@ -632,7 +633,7 @@ let controls = {
 
                         let popup = tile.popup;
                         if (!popup) this.scorePopups.push(popup = {
-                            pos: { x: x + 0.5, y: y + 0.5 },
+                            pos: { x: +x + 0.5, y: +y + 0.5 },
                             color: tile.type,
                             score: 0n,
                             exp: 0n,
@@ -653,20 +654,20 @@ let controls = {
                             }
                         }
                     }
-                    delete tile.power;
 
-                    if (matchTiles[id] >= 2) {
-                        tile.power = toPower;
+                    if (toPower) {
+                        delete tile.counted;
                         tile.anim = "transform";
                         tile.animTime = 1e-6;
                         if (tile.swapCheck !== undefined) {
                             delete this.board.tiles[tile.swapCheck]?.swapCheck;
                             delete tile.swapCheck;
                         }
+                        tile.power = toPower;
                     } else if (!["fade", "power-fade", "power-match"].includes(tile.anim)) {
                         tile.anim = "fade";
                         tile.animTime = 1e-6;
-                        tile.animArgs = { manual: this.cascade <= 0 };
+                        tile.animArgs = { manual: tile.popup?.manual };
                     }
                 }
                 
@@ -677,7 +678,6 @@ let controls = {
                             break;
                         }
                     }
-                    console.log(power, tile);
 
                     tile = this.board.tiles[tile];
 
@@ -696,6 +696,27 @@ let controls = {
                     tile.anim = "transform";
                     tile.lifetime = 0;
                     tile.animTime = 1e-6;
+                    delete tile.counted;
+                }
+                
+                let manual;
+                if (matchScores.length > 0) {
+                    matchScores.sort((a, b) => Number(b.score - a.score));
+                    for (let id in matchScores) {
+
+                        if (matchScores[id].manual && !manual) {
+                            this.cascade = 1;
+                            this.powerCascade = 0;
+                            manual = true;
+                        } else this.cascade++;
+
+                        matchScores[id].score *= BigInt(this.cascade);
+                        matchScores[id].exp += BigInt(this.cascade);
+                        this.score += matchScores[id].score;
+                        this.exp += matchScores[id].exp;
+                        this.lerpScore += Number(matchScores[id].score);
+                        this.scorePopups.push(matchScores[id]);
+                    }
                 }
                 
                 if (powerScores.length > 0) {
@@ -720,19 +741,6 @@ let controls = {
                         } else {
                             this.scorePopups.push(powerScores[id]);
                         }
-                    }
-                }
-                
-                if (matchScores.length > 0) {
-                    matchScores.sort((a, b) => Number(b.score - a.score));
-                    for (let id in matchScores) {
-                        this.cascade++;
-                        matchScores[id].score *= BigInt(this.cascade);
-                        matchScores[id].exp += BigInt(this.cascade);
-                        this.score += matchScores[id].score;
-                        this.exp += matchScores[id].exp;
-                        this.lerpScore += Number(matchScores[id].score);
-                        this.scorePopups.push(matchScores[id]);
                     }
                 }
 
@@ -1026,7 +1034,7 @@ let controls = {
                             offset.y += Math.random() * .1 - .05;
                         }
 
-                        ctx.font = 40 * scale * tScale + "px Helvetica, Arial, sans-serif";
+                        ctx.font = 20 * scale * tScale + "px Helvetica, Arial, sans-serif";
                         
                         if (tile.type < 7) {
 
@@ -1136,7 +1144,6 @@ let controls = {
                                 this.rect.y + size * (y - offset.y + .5), 
                             );
                         }
-                        
                     }
                 }
 

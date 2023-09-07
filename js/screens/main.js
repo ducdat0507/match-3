@@ -83,7 +83,7 @@ screens.main = function () {
         position: Ex(98, 2),
         size: Ex(-100, -4, 100, 100),
         progress: Number(game.stats.exp) / Number(goal),
-        fill: "#0000",
+        fill: "#000a",
     }), "progress")
     scene.$profile.append(controls.rect({
         position: Ex(2, 2),
@@ -95,19 +95,6 @@ screens.main = function () {
         text: game.stats.level.toLocaleString("en-US"),
         scale: 25,
     }), "rank")
-    scene.$profile.append(controls.label({
-        position: Ex(-90, -25),
-        align: "left",
-        text: "Player",
-        scale: 25,
-    }), "name")
-    scene.$profile.append(controls.label({
-        position: Ex(90, -25, 100),
-        align: "right",
-        style: "italic",
-        text: titles[level] || titles[titles.count - 1],
-        scale: 25,
-    }), "title")
 
     ButtonWithText(scene, {
         position: Ex(-390, -96, 50, 100),
@@ -127,13 +114,13 @@ screens.main = function () {
     scene.append(controls.base({
         onupdate() {
             if (window.innerWidth / scale >= 800) {
-                scene.$profile.position.x = -260;
-                scene.$profile.size.x = 520;
+                scene.$profile.position.x = -278;
+                scene.$profile.size.x = 556;
                 scene.$switchbtn.position.x = -350;
                 scene.$menubtn.position.x = 290;
             } else {
-                scene.$profile.position.x = -180;
-                scene.$profile.size.x = 360;
+                scene.$profile.position.x = -198;
+                scene.$profile.size.x = 396;
                 scene.$switchbtn.position.x = -270;
                 scene.$menubtn.position.x = 210;
             }

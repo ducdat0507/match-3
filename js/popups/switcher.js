@@ -17,7 +17,7 @@ popups.switcher = function (parent) {
         let btn = ButtonWithText(holder, {
             position: Ex(30, y + 20),
             size: Ex(-60, 60, 100),
-        }, meta.players[id].name, () => {
+        }, meta.currentPlayer == id ? "⮞   " + meta.players[id].name + "   ⮜" : meta.players[id].name, () => {
             popups.playerOpt(popup, id);
         });
         holder.size.y += 80;

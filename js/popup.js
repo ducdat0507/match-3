@@ -5,8 +5,8 @@ let popupAnim = false;
 function doPopup(parent) {
     let popup;
     scene.append(popup = controls.rect({
-        position: Ex(0, 0),
-        size: Ex(0, 0, 100, 100),
+        position: parent ? Ex(-280, 0, 50) : Ex(0, 0),
+        size: parent ? Ex(560, 0, 0, 100) : Ex(0, 0, 100, 100),
         fill: "#0000",
         close() {
             if (!popupAnim) {
@@ -52,7 +52,7 @@ function doPopup(parent) {
     function intro() {
         function anim1(x) {
             popup.$fill.position.ey = 100 * (1 - clamp01(x / 150));
-            if (!parent) popup.fill = "rgba(0, 0, 0, " + clamp01(x / 150) * .75 + ")";
+            popup.fill = "rgba(0, 0, 0, " + clamp01(x / 150) * .75 + ")";
             if (x >= 150) {
                 setContentAlpha(1);
                 startAnimation(anim2);
@@ -81,7 +81,7 @@ function doPopup(parent) {
         }
         function anim2(x) {
             popup.$fill.position.ey = 100 * clamp01(x / 150);
-            if (!parent) popup.fill = "rgba(0, 0, 0, " + (1 - clamp01(x / 150)) * .75 + ")";
+            popup.fill = "rgba(0, 0, 0, " + (1 - clamp01(x / 150)) * .75 + ")";
             if (x >= 150) {
                 scene.remove(popup);
                 popupAnim = false;
