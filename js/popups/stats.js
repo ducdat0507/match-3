@@ -73,7 +73,7 @@ popups.stats = function (parent) {
         holder.size.y += 20;
     }
 
-    addStatEntry("Total EXP gained", game.stats.totalExp.toLocaleString("en-US"));
+    addStatEntry("Total XP gained", game.stats.totalExp.toLocaleString("en-US"));
     addStatEntry("Total time played", formatDuration(game.stats.timePlayed));
     holder.size.y += 20;
 
