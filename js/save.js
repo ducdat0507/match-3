@@ -54,6 +54,8 @@ function getStartGame() {
             total: 0n,
             powers: {},
             colors: {},
+
+            timePlayed: 0,
         }
     }
 }
