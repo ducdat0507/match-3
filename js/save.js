@@ -113,7 +113,7 @@ function deepCopy(target, source) {
 
 function addTileToStats(tile) {
     game.stats.total++;
-    if (scene.$board?.boards.types == 7) {
+    if (scene.$board?.board.types == 7) {
         game.stats.colors[tile.type] = BigInt(game.stats.colors[tile.type] || 0n) + 1n;
     }
     if (tile.power) {
