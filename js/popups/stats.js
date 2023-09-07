@@ -54,11 +54,16 @@ popups.stats = function (parent) {
         5: "Down Triangle",
         6: "Circle",
     }
+    let colors = ["#ff0000", "#49e400", "#0065eb", "#ff00e4", "#fb5500", "#eecb00", "#fff7ea"];
+    let borders = ["#ccc", "#444", "#ccc", "#ccc", "#ccc", "#444", "#555"];
     if (Object.keys(game.stats.colors).length) {
         let best = Object.keys(tileSubs).reduce((x, y) => 
             BigInt(game.stats.colors[x] || 0n) > BigInt(game.stats.colors[y] || 0n) ? x : y, 0
         );
         addStatEntry("Favorite tile type", tileSubs[best]);
+        let label = holder.controls[holder.controls.length - 1];
+        label.fill = colors[best];
+        label.stroke = borders[best];
     }
 
     holder.size.y += 20;
