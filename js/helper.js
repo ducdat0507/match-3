@@ -68,8 +68,9 @@ function Board(args = {}) {
                 let values = keys.map(x => this.tiles[x]);
                 for (let key of keys) {
                     let index = Math.floor(Math.random() * values.length);
-                    this.tiles[key] = values.splice(index, 1);
+                    this.tiles[key] = values.splice(index, 1)[0];
                 }
+                console.log(this.tiles);
             } while (this.findMatches().count > 0 || this.findValidMoves().count == 0);
         },
         findMatches() {
@@ -289,7 +290,7 @@ function Board(args = {}) {
             for (let y = 0; y < board.height; y++) {
                 let tile = board.tiles[x + y * 100];
                 tile.offset = { x: 0, y: board.height + (window.innerHeight / 1000) / scale * board.height + Math.random() };
-                tile.velocity = { x: 0, y: board.height - y - 1 };
+                tile.velocity = { x: 0, y: board.height - y * 2 - 5 };
             }
         }
     }
@@ -315,4 +316,11 @@ function ButtonWithText(parent, args, text, onclick, id) {
         text,
     }), "text")
     return button;
+}
+
+function formatDuration(ms) {
+    let txt = Math.floor((ms /= 60000) % 60) + "m";
+    if (ms >= 60) txt = Math.floor((ms /= 60) % 24) + "h " + txt;
+    if (ms >= 24) txt = Math.floor((ms /= 24)) + "d " + txt;
+    return txt
 }

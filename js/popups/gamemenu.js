@@ -24,4 +24,6 @@ popups.gamemenu = function (parent) {
     }, "Continue →", () => {
         popup.close();
     });
+
+    return popup;
 }

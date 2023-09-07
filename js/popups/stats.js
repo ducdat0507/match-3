@@ -32,20 +32,44 @@ popups.stats = function (parent) {
     holder.size.y += 20;
 
     addStatEntry("Total tiles matched", game.stats.total.toLocaleString("en-US"));
+
     let powerSubs = {
-        flame: "Fire tiles",
-        star: "Lightning tiles",
+        flame: "Power tiles",
+        star: "Electro tiles",
         cube: "Dark cubes",
-        nova: "Supernovas",
+        nova: "Nova tiles",
         sphere: "Dark spheres",
         fourd: "Tesseracts",
     }
     for (let a in powerSubs) if (game.stats.powers[a]) {
         addStatEntry("    " + powerSubs[a], BigInt(game.stats.powers[a]).toLocaleString("en-US"));
     }
+    
+    let tileSubs = {
+        0: "Square",
+        1: "Pentagon",
+        2: "Rhombus",
+        3: "Up Triangle",
+        4: "Hexagon",
+        5: "Down Triangle",
+        6: "Circle",
+    }
+    if (Object.keys(game.stats.colors).length) {
+        let best = Object.keys(tileSubs).reduce((x, y) => 
+            BigInt(game.stats.colors[x] || 0n) > BigInt(game.stats.colors[y] || 0n) ? x : y, 0
+        );
+        addStatEntry("Favorite tile type", tileSubs[best]);
+    }
+
     holder.size.y += 20;
 
+    if (game.boards.endless) {
+        addStatEntry("Current Endless score", BigInt(game.boards.endless.score).toLocaleString("en-US"));
+        holder.size.y += 20;
+    }
+
     addStatEntry("Total EXP gained", game.stats.totalExp.toLocaleString("en-US"));
+    addStatEntry("Total time played", formatDuration(game.stats.timePlayed));
     holder.size.y += 20;
 
     ButtonWithText(popup.$content, {
@@ -54,4 +78,6 @@ popups.stats = function (parent) {
     }, "Back", () => {
         popup.close();
     });
+    
+    return popup;
 }

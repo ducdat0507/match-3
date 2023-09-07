@@ -10,7 +10,7 @@ function init() {
     window.oncontextmenu = e => false;
     
     load();
-    loadRes();
+    // loadRes();
     loadScreen("intro");
 
     loop();

@@ -53,6 +53,7 @@ function getStartGame() {
 
             total: 0n,
             powers: {},
+            colors: {},
         }
     }
 }
@@ -110,6 +111,7 @@ function deepCopy(target, source) {
 
 function addTileToStats(tile) {
     game.stats.total++;
+    game.stats.colors[tile.type] = BigInt(game.stats.colors[tile.type] || 0n) + 1n;
     if (tile.power) {
         game.stats.powers[tile.power] = BigInt(game.stats.powers[tile.power] || 0n) + 1n;
     }

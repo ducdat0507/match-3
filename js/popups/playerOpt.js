@@ -33,4 +33,6 @@ popups.playerOpt = function (parent, id) {
     }, "Back", () => {
         popup.close();
     });
+    
+    return popup;
 }

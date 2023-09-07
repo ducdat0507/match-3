@@ -67,4 +67,6 @@ popups.profile = function (parent) {
     }, "Back", () => {
         popup.close();
     });
+    
+    return popup;
 }

@@ -303,11 +303,13 @@ let controls = {
             hint: null,
             hintCooldown: 0,
 
+            paused: false,
             pauseTimer: 1000,
             speed: 1,
 
             __mouseActive: false,
             onupdate() {
+                if (this.paused) return;
                 
                 let matched = false;
                 let matchScores = [];
@@ -661,6 +663,7 @@ let controls = {
 
                     if (toPower) {
                         delete tile.counted;
+                        delete tile.popup;
                         tile.anim = "transform";
                         tile.animTime = 1e-6;
                         if (tile.swapCheck !== undefined) {
@@ -701,6 +704,7 @@ let controls = {
                     tile.lifetime = 0;
                     tile.animTime = 1e-6;
                     delete tile.counted;
+                    delete tile.popup;
                 }
                 
                 let manual;
@@ -787,7 +791,11 @@ let controls = {
                     [oldTile, newTile] = [newTile, oldTile];
                 }
 
+                this.powerCascade = this.cascade = 0;
+
                 if (newTile.type == 7) {
+                    this.cascade++;
+
                     if (oldTile.type == 7) {
                         let scores = {
                             "cube": 1n,
@@ -840,8 +848,6 @@ let controls = {
                     newTile.animTime = 1e-6;
                     newTile.animArgs = { offset: { x: -oldTile.animArgs.offset.x, y: -oldTile.animArgs.offset.y } };
                 }
-
-                this.powerCascade = this.cascade = 0;
                 
             },
             showHint() {

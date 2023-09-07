@@ -54,7 +54,15 @@ screens.game = function () {
         size: Ex(180, 60),
         fill: "#aaa7",
         onclick() {
-            if (!isAnimating) popups.gamemenu();
+            if (!isAnimating) {
+                let popup = popups.gamemenu();
+                scene.$board.paused = true;
+                let close = popup.close;
+                popup.close = () => {
+                    setTimeout(() => scene.$board.paused = false, 300);
+                    close();
+                };
+            }
         }
     }), "menubtn")
     scene.$menubtn.append(controls.rect({
@@ -103,6 +111,8 @@ screens.game = function () {
     
     scene.append(controls.base({
         onupdate() {
+            if (!scene.$board.paused) game.stats.timePlayed += delta
+
             scene.$score.text = (scene.$board.score - BigInt(Math.round(scene.$board.lerpScore))).toLocaleString("en-US");
             scene.$hintbtn.$fill.$bar.size = Ex(0, 0, Math.min(Math.max(scene.$board.hintCooldown / 5000, 0), 1) * 100, 100);
 
@@ -203,10 +213,22 @@ screens.game = function () {
         function anim1(x) {
             introFactor = ease.quart.in(clamp01((x - 1000) / 1000));
             if (x >= 2500) {
+
                 scene.$board.data.level++;
                 game.stats.exp += scene.$board.exp;
                 game.stats.totalExp += scene.$board.exp;
                 scene.$board.exp = 0n;
+                
+                let board = scene.$board.board;
+                board.scramble();
+                for (let x = 0; x < board.width; x++) {
+                    for (let y = 0; y < board.height; y++) {
+                        let tile = board.tiles[x + y * 100];
+                        tile.offset = { x: 0, y: board.height + (window.innerHeight / 1000) / scale * board.height + Math.random() };
+                        tile.velocity = { x: 0, y: board.height - y * 2 - 5 };
+                    }
+                }
+
                 scene.$board.save();
                 startAnimation(intro);
                 setTimeout(() => splash("LEVEL " + scene.$board.data.level.toLocaleString("en-US")), 2000);

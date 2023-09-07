@@ -21,4 +21,6 @@ popups.help = function (parent) {
     }, "Back", () => {
         popup.close();
     });
+    
+    return popup;
 }

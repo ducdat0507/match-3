@@ -24,4 +24,6 @@ popups.playerDel = function (parent, id) {
     }, "No", () => {
         popup.close();
     });
+    
+    return popup;
 }
