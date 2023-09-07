@@ -17,7 +17,6 @@ function init() {
 }
 
 let time = Date.now();
-let saveTime = 0;
 let delta = 0;
 let strain = 0;
 
@@ -30,11 +29,7 @@ let currentMode = "";
 function loop() {
     delta = Date.now() - time;
     time += delta;
-    saveTime += delta;
-    /* if (saveTime > 15000) {
-        save();
-        saveTime = 0;
-    } */
+    delta = Math.min(delta, 1000);
 
     let width = mainCanvas.width = window.innerWidth;
     let height = mainCanvas.height = window.innerHeight;
