@@ -532,12 +532,13 @@ let controls = {
                         ]
                         
                         let popup = tile.popup;
-                        if (!popup) this.scorePopups.push(popup = {
+                        if (!popup || popup.lifetime >= 1) this.scorePopups.push(popup = {
                             pos: { x: +x + 0.5, y: +y + 0.5 },
                             color: type,
                             score: 0n,
                             exp: 0n,
                         });
+                        console.log(popup);
 
                         for (let tid in this.board.tiles) {
                             let tTile = this.board.tiles[tid];
@@ -571,12 +572,13 @@ let controls = {
                         ]
 
                         let popup = tile.popup;
-                        if (!popup) this.scorePopups.push(popup = {
+                        if (!popup || popup.lifetime >= 1) this.scorePopups.push(popup = {
                             pos: { x: +x + 0.5, y: +y + 0.5 },
                             color: tile.type,
                             score: 0n,
                             exp: 0n,
                         });
+                        console.log(popup);
 
                         for (let tid in this.board.tiles) {
                             let tTile = this.board.tiles[tid];
@@ -599,12 +601,13 @@ let controls = {
                         ]
 
                         let popup = tile.popup;
-                        if (!popup) this.scorePopups.push(popup = {
+                        if (!popup || popup.lifetime >= 1) this.scorePopups.push(popup = {
                             pos: { x: +x + 0.5, y: +y + 0.5 },
                             color: tile.type,
                             score: 0n,
                             exp: 0n,
                         });
+                        console.log(popup);
 
                         for (let tid in this.board.tiles) {
                             let tTile = this.board.tiles[tid];
@@ -632,12 +635,13 @@ let controls = {
                         ]
 
                         let popup = tile.popup;
-                        if (!popup) this.scorePopups.push(popup = {
+                        if (!popup || popup.lifetime >= 1) this.scorePopups.push(popup = {
                             pos: { x: +x + 0.5, y: +y + 0.5 },
                             color: tile.type,
                             score: 0n,
                             exp: 0n,
                         });
+                        console.log(popup);
 
                         for (let tid in this.board.tiles) {
                             let tTile = this.board.tiles[tid];

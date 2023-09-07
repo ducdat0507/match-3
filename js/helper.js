@@ -62,6 +62,16 @@ function Board(args = {}) {
                 }
             }
         },
+        scramble() {
+            do {
+                let keys = Object.keys(this.tiles).filter(x => !this.tiles[x].anim);
+                let values = keys.map(x => this.tiles[x]);
+                for (let key of keys) {
+                    let index = Math.floor(Math.random() * values.length);
+                    this.tiles[key] = values.splice(index, 1);
+                }
+            } while (this.findMatches().count > 0 || this.findValidMoves().count == 0);
+        },
         findMatches() {
             let hozTiles = {}, vetTiles = {}, matches = { count: 0 };
             for (let x = 0; x < this.width; x++) {
@@ -116,7 +126,6 @@ function Board(args = {}) {
                     }
                 }
             }
-            console.log(matches);
             return matches;
         },
         findValidMoves() {

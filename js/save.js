@@ -109,7 +109,6 @@ function deepCopy(target, source) {
 }
 
 function addTileToStats(tile) {
-    console.log(tile.power, tile);
     game.stats.total++;
     if (tile.power) {
         game.stats.powers[tile.power] = BigInt(game.stats.powers[tile.power] || 0n) + 1n;
