@@ -1108,7 +1108,7 @@ let controls = {
 
                                 for (let a = (tile.lifetime / 4 % .2); a < 2; a += 0.2) {
                                     this.drawTile(
-                                        Math.floor(tile.lifetime * 5 - a * 20) % 7,
+                                        Math.floor(tile.lifetime * 5 - a * 20 - 2.5) % 7,
                                         this.rect.x + size * (x + offset.x + .5), 
                                         this.rect.y + size * (y - offset.y + .5), 
                                         "hsla(" + (((tile.lifetime + a * 2) * 100) % 360) + "deg, 100%, 70%, " + a * 0.5 + ")",
