@@ -170,10 +170,10 @@ screens.game = function () {
                         if (currentMode == "classic") {
                             
                         } else {
-                            let keys = Object.keys(scene.$board.board.tiles);
+                            let tiles = Object.values(scene.$board.board.tiles);
                             let tile;
-                            while (tile && !tile.power)
-                                tile = scene.$board.board.tiles[keys[Math.floor(Math.random() * keys.length)]]
+                            while (!tile && !tile.power)
+                                tile = tiles[Math.floor(Math.random() * tiles.length)]
                             tile.type = 7;
                             tile.power = "cube"
                         }
