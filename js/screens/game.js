@@ -166,6 +166,17 @@ screens.game = function () {
                     if (!isAnimating && Number(scene.$board.exp) >= goal) {
                         isAnimating = true;
                         levelUp();
+                    } else if (scene.$board.moves == 0) {
+                        if (currentMode == "classic") {
+                            
+                        } else {
+                            let keys = Object.keys(scene.$board.board.tiles);
+                            let tile;
+                            while (tile && !tile.power)
+                                tile = scene.$board.board.tiles[keys[Math.floor(Math.random() * keys.length)]]
+                            tile.type = 7;
+                            tile.power = "cube"
+                        }
                     } else {
                         scene.$board.save();
                     }
