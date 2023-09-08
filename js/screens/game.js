@@ -166,7 +166,7 @@ screens.game = function () {
                     if (!isAnimating && Number(scene.$board.exp) >= goal) {
                         isAnimating = true;
                         levelUp();
-                    } else if (scene.$board.moves == 0) {
+                    } else if (scene.$board.moves.count == 0) {
                         if (currentMode == "classic") {
                             
                         } else {
