@@ -4,7 +4,7 @@ screens.intro = function () {
         position: Ex(-300, -100, 50, 45),
         size: Ex(500, 0),
         scale: 70,
-        text: "Yet Another Match-3 Clone",
+        text: "Yet Another Match-3 Clone.",
         style: "900",
         wrap: true,
         align: "left",

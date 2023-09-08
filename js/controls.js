@@ -147,10 +147,12 @@ let controls = {
                     }
                 } else {
                     ctx.fillRect(this.rect.x, this.rect.y, this.rect.width, this.rect.height);
-                    if (this.__mouseIn) {
+                    let level = this.__mouseActive * this.__mouseIn;
+                    if (!isTouch) level += this.__mouseIn 
+                    if (level >= 1) {
                         ctx.fillStyle = "#ffffff7f";
                         ctx.fillRect(this.rect.x, this.rect.y, this.rect.width, this.rect.height);
-                        if (this.__mouseActive) {
+                        if (level >= 2) {
                             ctx.fillStyle = "#0000003f";
                             ctx.fillRect(this.rect.x, this.rect.y, this.rect.width, this.rect.height);
                         }

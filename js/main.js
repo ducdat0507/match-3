@@ -64,6 +64,7 @@ function renderControls(cts, rect, alpha = 1) {
 let pointers = {};
 let mousePos = { x: 0, y: 0 }
 let lastArgs;
+let isTouch;
 
 function updateInMouseState(cts, did = false) {
     let did2 = did;
@@ -122,6 +123,7 @@ function doMouseEvent(e, type) {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
+    isTouch = false;
 }
 function doTouchEvent(e, type) {
     for (let touch of e.changedTouches) {
@@ -133,6 +135,7 @@ function doTouchEvent(e, type) {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
+    isTouch = true;
 }
 
 function loadScreen(screenName, clear = true) {
