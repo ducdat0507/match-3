@@ -172,7 +172,7 @@ screens.game = function () {
                         } else {
                             let tiles = Object.values(scene.$board.board.tiles);
                             let tile;
-                            while (!tile && !tile.power)
+                            while (!tile || !tile.power)
                                 tile = tiles[Math.floor(Math.random() * tiles.length)]
                             tile.type = 7;
                             tile.power = "cube"
