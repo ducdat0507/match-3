@@ -556,14 +556,16 @@ let controls = {
                                 } else if (power == "sphere") {
                                     tTile.anim = "power-match";
                                     tTile.trigger = tile;
+                                    tTile.popup = popup;
                                     tTile.power = tTile.power ?? "flame";
                                     tTile.animTime = (Math.abs(x - px) + Math.abs(y - py)) / 5 + 1;
-                                    tTile.animArgs = { score: 120n, exp: 1n, pause: 500, popup };
+                                    tTile.animArgs = { score: 120n, exp: 4n, pause: 500, popup };
                                 } else {
                                     tTile.anim = "power-match";
                                     tTile.trigger = tile;
+                                    tTile.popup = popup;
                                     tTile.animTime = (Math.abs(x - px) + Math.abs(y - py)) / 10 + .8;
-                                    tTile.animArgs = { score: 50n, exp: 1n, pause: 500, popup };
+                                    tTile.animArgs = { score: 50n, exp: 3n, pause: 500, popup };
                                 }
                             }
                         }
@@ -592,8 +594,9 @@ let controls = {
                             if ((x == px || y == py) && py >= -0.5 && (!tTile.anim || tTile.anim == "fade")) {
                                 tTile.anim = "power-match";
                                 tTile.animTime = (Math.abs(x - px) + Math.abs(y - py)) / 10 + .8;
-                                tTile.animArgs = { score: 40n, exp: 1n, pause: 500, popup };
+                                tTile.animArgs = { score: 40n, exp: 2n, pause: 500, popup };
                                 tTile.trigger = tile;
+                                tTile.popup = popup;
                             }
                         }
                     } else if (tile.power == "flame") {
@@ -622,8 +625,9 @@ let controls = {
                                 if (Math.abs(y - py) < 1.25) {
                                     tTile.anim = "power-match";
                                     tTile.animTime = tid != id && tTile.power == "flame" ? 0.25 : 0;
-                                    tTile.animArgs = { score: 20n, exp: 1n, popup };
+                                    tTile.animArgs = { score: tid == id ? 60n : 15n, exp: 1n, popup };
                                     tTile.trigger = tile;
+                                    tTile.popup = popup;
                                 } else if (py - y < 0) {
                                     tTile.velocity.y = Math.max(tTile.velocity.y, 5.5 - Math.abs(x - px) * 0.5);
                                     this.speed = 0.4;
@@ -655,8 +659,9 @@ let controls = {
                             if ((Math.abs(x - px) < 1.25 || Math.abs(y - py) < 1.25) && py >= -0.5 && (!tTile.anim || tTile.anim == "fade")) {
                                 tTile.anim = "power-match";
                                 tTile.animTime = (Math.abs(x - px) + Math.abs(y - py)) / 10 + .8;
-                                tTile.animArgs = { score: 80n, exp: 1n, pause: 500, popup };
+                                tTile.animArgs = { score: 80n, exp: 2n, pause: 500, popup };
                                 tTile.trigger = tile;
+                                tTile.popup = popup;
                             }
                         }
                     }
@@ -719,7 +724,7 @@ let controls = {
                         } else this.cascade++;
 
                         matchScores[id].score *= BigInt(this.cascade);
-                        matchScores[id].exp += BigInt(this.cascade);
+                        matchScores[id].exp += BigInt(this.cascade) * 3n;
                         this.score += matchScores[id].score;
                         this.exp += matchScores[id].exp;
                         this.lerpScore += Number(matchScores[id].score);
@@ -1104,54 +1109,39 @@ let controls = {
                                 size * tScale, 
                             );
                         } else {
-                            if (tile.power == "cube") {
 
-                                for (let a = (tile.lifetime / 4 % .2); a < 2; a += 0.2) {
-                                    this.drawTile(
-                                        Math.floor(tile.lifetime * 5 - a * 20 - 2.5) % 7,
-                                        this.rect.x + size * (x + offset.x + .5), 
-                                        this.rect.y + size * (y - offset.y + .5), 
-                                        "hsla(" + (((tile.lifetime + a * 2) * 100) % 360) + "deg, 100%, 70%, " + a * 0.5 + ")",
-                                        "rgba(0, 0, 0, " + a * 0.5 + ")",
-                                        size * tScale * (1 + (1 - a)), 
-                                    );
-                                }
-
+                            for (let a = (tile.lifetime / 4 % .2); a < 2; a += 0.2) {
                                 this.drawTile(
-                                    0,
-                                    this.rect.x + size * (x + offset.x + .54), 
-                                    this.rect.y + size * (y - offset.y + .54), 
-                                    fade ? "white" : "#000a",
-                                    fade ? "white" : "#000a",
-                                    size * tScale, 
-                                );
-                                
-                                this.drawTile(
-                                    0,
+                                    Math.floor(tile.lifetime * 5 - a * 20 + 2.5) % 7,
                                     this.rect.x + size * (x + offset.x + .5), 
                                     this.rect.y + size * (y - offset.y + .5), 
-                                    "hsl(" + ((tile.lifetime * 100) % 360) + "deg, 100%, 70%)",
-                                    "#000",
-                                    size * tScale, 
+                                    "hsla(" + (((tile.lifetime + a * 2) * 100) % 360) + "deg, 100%, 70%, " + a * 0.5 + ")",
+                                    "rgba(0, 0, 0, " + a * 0.5 + ")",
+                                    size * tScale * (1 + (1 - a)), 
                                 );
                             }
-                        }
+                            let type = -1;
 
-                        if (tile.power) {
-                            let icon = {
-                                star: "",
-                                flame: "",
-                                cube: "",
-                                nova: "",
-                                sphere: "🔴",
-                                fourd: "E",
-                            }[tile.power];
+                            if (tile.power == "cube") type = 0;
+                            if (tile.power == "sphere") type = 6;
+                            if (tile.power == "fourd") type = 4;
 
-                            ctx.strokeStyle = "#000000";
-                            ctx.strokeText(
-                                icon,
+                            this.drawTile(
+                                type,
+                                this.rect.x + size * (x + offset.x + .54), 
+                                this.rect.y + size * (y - offset.y + .54), 
+                                fade ? "white" : "#000a",
+                                fade ? "white" : "#000a",
+                                size * tScale, 
+                            );
+                            
+                            this.drawTile(
+                                type,
                                 this.rect.x + size * (x + offset.x + .5), 
                                 this.rect.y + size * (y - offset.y + .5), 
+                                "hsl(" + ((tile.lifetime * 100) % 360) + "deg, 100%, 70%)",
+                                "#000",
+                                size * tScale, 
                             );
                         }
                     }
