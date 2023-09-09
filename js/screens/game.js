@@ -227,6 +227,13 @@ screens.game = function () {
 
                 scene.$board.data.level++;
                 rankBarLevelPopup(scene.$board.exp, () => {
+                    for (let x = 0; x < board.width; x++) {
+                        for (let y = 0; y < board.height; y++) {
+                            let tile = board.tiles[x + y * 100];
+                            tile.offset = { x: 0, y: board.height + (window.innerHeight / 1000) / scale * board.height + Math.random() };
+                            tile.velocity = { x: 0, y: board.height - y * 2 - 5 };
+                        }
+                    }
                     startAnimation(intro);
                     setTimeout(() => splash("LEVEL " + scene.$board.data.level.toLocaleString("en-US")), 2000);
                 });
@@ -235,13 +242,6 @@ screens.game = function () {
                 
                 let board = scene.$board.board;
                 board.scramble();
-                for (let x = 0; x < board.width; x++) {
-                    for (let y = 0; y < board.height; y++) {
-                        let tile = board.tiles[x + y * 100];
-                        tile.offset = { x: 0, y: board.height + (window.innerHeight / 1000) / scale * board.height + Math.random() };
-                        tile.velocity = { x: 0, y: board.height - y * 2 - 5 };
-                    }
-                }
 
                 scene.$board.save();
                 return true;
