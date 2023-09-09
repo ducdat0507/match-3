@@ -35,6 +35,7 @@ let controls = {
             onpointerdown() {},
             onpointermove() {},
             onpointerup() {},
+            onmousewheel() {},
             ...args
         }
     },
@@ -274,6 +275,67 @@ let controls = {
         let ct = {
             ...controls.rect(),
 
+            __mouseActive: false,
+            scrollPos: 0,
+            scrollSpd: 0,
+            mask: true,
+
+            onupdate() {
+                let max = Math.max((this.$content.rect.height - this.rect.height) / scale, 0);
+
+                if (!this.__mouseActive) {
+                    this.scrollPos += this.scrollSpd * delta / 1000;
+                    this.scrollSpd *= 0.5 ** (delta / 1000);
+                    if (this.scrollPos > 0) {
+                        this.scrollSpd *= 1e-3 ** (delta / 1000);
+                        this.scrollPos *= 1e-3 ** (delta / 1000);
+                    } else if (this.scrollPos < -max) {
+                        let p = this.scrollPos + max;
+                        this.scrollSpd *= 1e-3 ** (delta / 1000);
+                        this.scrollPos = -max + p * 1e-3 ** (delta / 1000);
+                    }
+                }
+
+                this.$content.position.y = this.scrollPos;
+
+                if (this.$content.position.y > 0) {
+                    this.$content.position.y -= this.scrollPos * (1 - 1 / (1 + this.scrollPos / 150));
+                } else if (this.$content.position.y < -max) {
+                    let p = this.scrollPos + max;
+                    this.$content.position.y -= p * (1 - 1 / (1 - p / 150));
+                }
+            },
+
+            onpointerdown(pos, args) {
+                this.__mouseActive = true;
+                let startPos = mousePos;
+                let startScr = this.scrollPos;
+                let scrTime = time;
+                let movehandler = (e) => {
+                    let pos = {
+                        x: e.clientX,
+                        y: e.clientY,
+                    }
+                    let d = startScr + (pos.y - startPos.y) / scale;
+                    this.scrollSpd = (d - this.scrollPos) / delta * 1000;
+                    this.scrollPos = d;
+                    scrTime = time;
+                }
+                let uphandler = (e) => {
+                    this.__mouseActive = false;
+                    if (Math.abs(this.scrollSpd) < 20 || time - scrTime > 100) this.scrollSpd = 0;
+
+                    document.removeEventListener("pointermove", movehandler);
+                    document.removeEventListener("pointerup", uphandler);
+                }
+                document.addEventListener("pointermove", movehandler);
+                document.addEventListener("pointerup", uphandler);
+            },
+
+            onmousewheel(pos, args) {
+                this.scrollPos -= args.deltaY * 5;
+            },
+
             ...args
         }
         ct.append(controls.base({
@@ -301,13 +363,16 @@ let controls = {
             powerCascade: 0,
             
             scorePopups: [],
+            effects: [],
 
             hint: null,
             hintCooldown: 0,
+            hintAutoTimer: 0,
 
             paused: false,
-            pauseTimer: 1000,
-            speed: 1,
+            pauseTimer: 0,
+            pauseFader: 0,
+            speed: 0.25,
 
             __mouseActive: false,
             onupdate() {
@@ -473,9 +538,16 @@ let controls = {
                                 exp: tile.animArgs.exp
                             })
                             
-                            tile.anim = "power-fade";
-                            tile.animTime = 0;
-                            tile.animArgs = { manual: false };
+                            if (tile.animArgs.fourd) {
+                                tile.power = "cube";
+                                delete tile.anim;
+                                delete tile.animTime;
+                                delete tile.animArgs;
+                            } else {
+                                tile.anim = "power-fade";
+                                tile.animTime = 0;
+                                tile.animArgs = { manual: false };
+                            }
 
                             matchTiles[id] = matchTiles[id] ?? 1;
                         }
@@ -520,14 +592,15 @@ let controls = {
 
                     let tile = this.board.tiles[id];
                     
-                    if (!tile.counted) {
+                    let triggered;
+                    if (!(triggered = tile.counted)) {
                         addTileToStats(tile);
                         tile.counted = true;
                     }
 
-                    if (tile.trigger == tile) {
+                    if (triggered) {
 
-                    } if (tile.type == 7) {
+                    } else if (tile.type == 7) {
                         let power = tile.power;
                         let type = tile.trigger.type;
                         let [x, y] = [
@@ -543,6 +616,14 @@ let controls = {
                             exp: 0n,
                         });
                         console.log(popup);
+                        
+                        let effect; 
+                        this.effects.push(effect = {
+                            type: "free-lightning",
+                            color: type,
+                            pos: { x: +x + 0.5, y: +y + 0.5 },
+                            targets: [],
+                        });
 
                         for (let tid in this.board.tiles) {
                             let tTile = this.board.tiles[tid];
@@ -553,8 +634,11 @@ let controls = {
                             ]
                             if (tTile.type == type && py >= -0.5 && (!tTile.anim || tTile.anim == "fade")) {
                                 if (power == "fourd") {
-                                    tTile.power = "cube";
-                                    tTile.type = 7;
+                                    tTile.anim = "power-match";
+                                    tTile.trigger = tile;
+                                    tTile.popup = popup;
+                                    tTile.animTime = (Math.abs(x - px) + Math.abs(y - py)) / 5 + 1;
+                                    tTile.animArgs = { score: 250n, exp: 6n, pause: 500, popup, fourd: true };
                                 } else if (power == "sphere") {
                                     tTile.anim = "power-match";
                                     tTile.trigger = tile;
@@ -569,6 +653,7 @@ let controls = {
                                     tTile.animTime = (Math.abs(x - px) + Math.abs(y - py)) / 10 + .8;
                                     tTile.animArgs = { score: 50n, exp: 3n, pause: 500, popup };
                                 }
+                                effect.targets.push({ x: px, y: py, tile: tTile });
                             }
                         }
                     } else if (tile.power == "star") {
@@ -586,6 +671,14 @@ let controls = {
                         });
                         console.log(popup);
 
+                        let effect; 
+                        this.effects.push(effect = {
+                            type: "lightning",
+                            color: tile.type,
+                            pos: { x: +x + 0.5, y: +y + 0.5 },
+                            targets: [{ x, y, tile }],
+                        });
+
                         for (let tid in this.board.tiles) {
                             let tTile = this.board.tiles[tid];
                             if (!tTile) continue;
@@ -599,6 +692,7 @@ let controls = {
                                 tTile.animArgs = { score: 40n, exp: 2n, pause: 500, popup };
                                 tTile.trigger = tile;
                                 tTile.popup = popup;
+                                effect.targets.push(tTile);
                             }
                         }
                     } else if (tile.power == "flame") {
@@ -615,6 +709,11 @@ let controls = {
                             exp: 0n,
                         });
                         console.log(popup);
+
+                        this.effects.push({
+                            type: "explosion",
+                            pos: { x: +x + 0.5, y: +y + 0.5 },
+                        });
 
                         for (let tid in this.board.tiles) {
                             let tTile = this.board.tiles[tid];
@@ -778,6 +877,13 @@ let controls = {
 
                 if (fallCount > 0) {
                     this.hint = null;
+                    this.hintAutoTimer = 0;
+                } else {
+                    this.hintAutoTimer += delta;
+                    if (this.hintAutoTimer > 15000 && game.options.autoHint) {
+                        this.showHint();
+                        this.hintCooldown = 0;
+                    }
                 }
 
                 this.fallCount = fallCount;
@@ -871,6 +977,7 @@ let controls = {
                     ) : "hoz"
                 }
                 this.hintCooldown = 5000;
+                this.hintAutoTimer = -Infinity;
             },
             onpointerdown(e) {
                 let size = Math.min(this.rect.width / this.board.width, this.rect.height / this.board.height);
@@ -1164,17 +1271,137 @@ let controls = {
                     ctx.globalAlpha = 1;
                 }
 
+                // Swap indicator
                 if (this.swapPos) {
                     ctx.strokeStyle = "#aaaaaa";
                     ctx.lineWidth = 4 * scale;
                     ctx.strokeRect(
-                        this.rect.x + size * (this.swapPos.x) + 2 * scale, 
-                        this.rect.y + size * (this.swapPos.y) + 2 * scale, 
+                        this.rect.x + size * this.swapPos.x + 2 * scale, 
+                        this.rect.y + size * this.swapPos.y + 2 * scale, 
                         size - 4 * scale, 
                         size - 4 * scale, 
                     );
                 }
+
+                // Effect fader
+                this.pauseFader = clamp01(this.pauseFader + (this.pauseTimer > 0 ? 2 : -1) * delta / 1000);
+
+                if (this.pauseFader) {
+                    ctx.fillStyle = "rgba(0, 0, 0, " + this.pauseFader * 0.4 + ")";
+                    ctx.fillRect(
+                        0, 
+                        0, 
+                        window.innerWidth, 
+                        window.innerHeight, 
+                    );
+                }
+
+                // Effects
+                for (let id in this.effects) {
+                    let effect = this.effects[id];
+
+                    if (effect.type == "explosion") {
+                        ctx.globalAlpha = 1 - effect.time;
+                        ctx.fillStyle = "#fa37";
+                        ctx.strokeStyle = "#fa3";
+                        ctx.lineWidth = size / 10;
+                        for (let a = 0; a < 3; a++) {
+                            ctx.beginPath();
+                            ctx.arc(
+                                this.rect.x + size * effect.pos.x, 
+                                this.rect.y + size * effect.pos.y, 
+                                size * (1.5 + (effect.time - (0.25 * a)) * (0.25 * a + 0.1)), 0, Math.PI*2
+                            );
+                            ctx.fill();
+                            ctx.beginPath();
+                            ctx.arc(
+                                this.rect.x + size * effect.pos.x, 
+                                this.rect.y + size * effect.pos.y, 
+                                size * (1.5 + (effect.time - (0.25 * a)) * (0.5 * a + 0.2)), 0, Math.PI*2
+                            );
+                            ctx.stroke();
+                        }
+                        ctx.globalAlpha = 1;
+                        effect.time = (effect.time || 0) + delta / 1000;
+                    } else if (effect.type == "lightning") {
+                        for (let a = 0; a < 3; a++) {
+                            ctx.beginPath();
+                            ctx.moveTo(
+                                this.rect.x, 
+                                this.rect.y + size * (effect.pos.y + Math.random() * .6 - .3), 
+                            );
+                            for (let x = 1; x <= this.board.width; x++) {
+                                ctx.lineTo(
+                                    this.rect.x + size * x, 
+                                    this.rect.y + size * (effect.pos.y + Math.random() * .6 - .3), 
+                                );
+                            }
+                            ctx.moveTo(
+                                this.rect.x + size * (effect.pos.x + Math.random() * .6 - .3), 
+                                this.rect.y, 
+                            );
+                            for (let y = 1; y <= this.board.width; y++) {
+                                ctx.lineTo(
+                                    this.rect.x + size * (effect.pos.x + Math.random() * .6 - .3), 
+                                    this.rect.y + size * y, 
+                                );
+                            }
+
+                            ctx.lineWidth = size / (a + 4);
+                            ctx.strokeStyle = colors[effect.color];
+                            ctx.stroke();
+                            ctx.lineWidth = size / (a + 2);
+                            ctx.strokeStyle = "#ddf5";
+                            ctx.stroke();
+                        }
+
+                        let isInc = true;
+                        for (let target of effect.targets) if (target.anim == "power-match") {
+                            isInc = false;
+                            break;
+                        }
+                        if (isInc) effect.time = (effect.time || 0) + delta / 500;
+                        else effect.time = 0;
+                    } else if (effect.type == "free-lightning") {
+                        for (let a = 0; a < 3; a++) {
+                            let pos = effect.pos;
+                            let poses = [...effect.targets];
+                            ctx.beginPath();
+                            while (poses.length) {
+                                for (let p of poses) {
+                                    p.dist = ((p.x - pos.x) ** 2 + (p.y - pos.y) ** 2 + (Math.random() * 2) ** 2);
+                                }
+                                poses.sort((x, y) => x.dist - y.dist);
+                                pos = poses.shift();
+                                if (pos.tile.anim != "power-fade" && pos.tile.animTime < 1) ctx.lineTo(
+                                    this.rect.x + size * (pos.x + Math.random() * .6 + .2), 
+                                    this.rect.y + size * (pos.y + Math.random() * .6 + .2), 
+                                );
+                            }
+
+                            ctx.lineWidth = size / (a * 4 + 8);
+                            ctx.strokeStyle = colors[effect.color];
+                            ctx.stroke();
+                            ctx.lineWidth = size / (a * 2 + 4);
+                            ctx.strokeStyle = "#fff5";
+                            ctx.stroke();
+                        }
+
+                        let isInc = true;
+                        for (let target of effect.targets) if (target.tile.anim == "power-match") {
+                            isInc = false;
+                            break;
+                        }
+                        if (isInc) effect.time = (effect.time || 0) + delta / 500;
+                        else effect.time = 0;
+                    }
+
+                    if (effect.time >= 1) {
+                        this.effects.splice(+id, 1);
+                    }
+                }
                 
+                // Score popups
                 ctx.fillStyle = "#000000";
 
                 ease = (x) => {

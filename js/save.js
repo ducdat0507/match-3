@@ -3,7 +3,7 @@ var meta = {};
 function getStartMeta() {
     return {
         currentPlayer: "",
-        players: {}
+        players: {},
     }
 }
 
@@ -56,7 +56,11 @@ function getStartGame() {
             colors: {},
 
             timePlayed: 0,
-        }
+        },
+        options: {
+            autoHint: true,
+            fpsCounter: false,
+        },
     }
 }
 

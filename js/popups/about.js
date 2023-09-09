@@ -46,11 +46,11 @@ popups.about = function (parent) {
 
     addTitle("Created by");
     addLine("ducdat0507");
-
+    
     holder.size.y += 40;
 
-    addTitle("Inspired by other match-3 games,");
-    addTitle("most dominantly Bejeweled and such.");
+    addTitle("Inspired by other match-3 games (duh),");
+    addTitle("most dominantly the Bejeweled series and such.");
 
     holder.size.y += 50;
 

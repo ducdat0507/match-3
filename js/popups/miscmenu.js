@@ -3,20 +3,30 @@ popups.miscmenu = function (parent) {
 
     let popup = doPopup(parent);
     popup.$title.text = "Menu";
-    
-    ButtonWithText(popup.$content, {
-        position: Ex(30, -80, 0, 25),
-        size: Ex(-60, 60, 100),
-    }, "How to Play", () => {
-        popups.help(popup);
-    });
-    
-    ButtonWithText(popup.$content, {
-        position: Ex(30, 0, 0, 25),
-        size: Ex(-60, 60, 100),
-    }, "About", () => {
-        popups.about(popup);
-    });
+    popup.$content.append(controls.scroller({
+        position: Ex(0, -100, 0, 25),
+        size: Ex(0, 200, 100, 50),
+        fill: 0
+    }), "view");
+
+    let holder = popup.$content.$view.$content
+
+    function addEntry(title, id) {
+        let y = holder.size.y;
+        let btn = ButtonWithText(holder, {
+            position: Ex(30, y + 20),
+            size: Ex(-60, 60, 100),
+        }, title, () => {
+            popups[id](popup);
+        });
+        holder.size.y += 80;
+    }
+
+    addEntry("How to Play", "help");
+    addEntry("Options", "options");
+    addEntry("About", "about");
+
+    holder.size.y += 20;
 
     
 

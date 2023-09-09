@@ -4,9 +4,11 @@ let ctx;
 function init() {
     mainCanvas = document.getElementById("main-canvas");
     ctx = mainCanvas.getContext("2d");
+
     bindPointerEvent("onpointerdown", "mousedown", "touchstart");
     bindPointerEvent("onpointermove", "mousemove", "touchmove");
     bindPointerEvent("onpointerup", "mouseup", "touchend");
+    bindPointerEvent("onmousewheel", "wheel");
     window.oncontextmenu = e => false;
     
     load();
@@ -16,9 +18,10 @@ function init() {
     loop();
 }
 
-let time = Date.now();
+let time = performance.now();
 let delta = 0;
-let strain = 0;
+let strain = [];
+let fps = [];
 
 let scene = controls.base();
 let screens = {}
@@ -26,22 +29,45 @@ let scale = 1;
 
 let currentMode = "";
 
-function loop() {
-    delta = Date.now() - time;
+function loop(timestamp) {
+    delta = (timestamp ?? performance.now()) - time;
     time += delta;
-    delta = Math.min(delta, 1000);
+    fps.push(delta);
+    if (fps.length > 60) fps.shift();
+    delta = Math.max(Math.min(delta, 1000), 0);
 
     let width = mainCanvas.width = window.innerWidth;
     let height = mainCanvas.height = window.innerHeight;
     scale = Math.min(width / 600, height / 800, window.devicePixelRatio);
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, width, height);
+    ctx.lineJoin = "round";
+
 
     updateAnimations();
     updateInMouseState(scene.controls);
     renderControls(scene.controls, { x: 0, y: 0, width, height });
 
-    strain = Date.now() - time;
+    if (game.options.fpsCounter) {
+        ctx.fillStyle = "#fff";
+        ctx.font = (10 * scale) + "px Helvetica, Arial, sans-serif";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
+        ctx.fillText(
+            (1000 / fps.reduce((x, y) => x + y, 0) * fps.length).toFixed(2) + "fps ("
+                + (1000 / Math.max(...fps)).toFixed(2) + " | "
+                + (1000 / fps[fps.length - 1]).toFixed(2) + " | "
+                + (1000 / Math.min(...fps)).toFixed(2) + ")",
+            15 * scale, window.innerHeight - 35 * scale
+        )
+        ctx.fillText(
+            "strain: " + (strain.reduce((x, y) => x + y, 0) / strain.length).toFixed(2) + "ms",
+            15 * scale, window.innerHeight - 20 * scale
+        )
+    }
+
+    strain.push(performance.now() - time);
+    if (strain.length > 10) strain.shift();
     window.requestAnimationFrame(loop);
 }
 
@@ -56,8 +82,22 @@ function renderControls(cts, rect, alpha = 1) {
         let a = alpha * ct.alpha;
         ctx.globalAlpha = a;
         ct.onupdate();
-        if (a > 0) ct.render();
+        if (a > 0) {
+            if (ct.mask) { 
+                ctx.save();
+                ctx.beginPath();
+                ctx.lineTo(ct.rect.x, ct.rect.y);
+                ctx.lineTo(ct.rect.x + ct.rect.width, ct.rect.y);
+                ctx.lineTo(ct.rect.x + ct.rect.width, ct.rect.y + ct.rect.height);
+                ctx.lineTo(ct.rect.x, ct.rect.y + ct.rect.height);
+                ctx.clip();
+            }
+            ct.render();
+        }
         if (ct.controls.length) renderControls (ct.controls, ct.rect, a);
+        if (a > 0 && ct.mask) {
+            ctx.restore();
+        }
     }
 }
 

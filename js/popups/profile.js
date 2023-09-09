@@ -3,17 +3,6 @@ popups.profile = function (parent) {
 
     let popup = doPopup(parent);
     popup.$title.text = "Profile";
-
-    let level, goal;
-
-    while (true) {
-        level = game.stats.level - 1n;
-        goal = 2500n + 1475n * level + 25n * level * level;
-        if (game.stats.exp >= goal) {
-            game.stats.exp -= goal;
-            game.stats.level ++;
-        } else break;
-    }
     
     popup.$content.append(controls.rect({
         position: Ex(-200, 0, 50, 25),
@@ -28,6 +17,8 @@ popups.profile = function (parent) {
         text: meta.players[meta.currentPlayer].name,
         scale: 40,
     }), "name")
+    
+    let {level, goal} = getRankData();
     
     popup.$content.append(controls.gembar({
         position: Ex(-249, 100, 50, 25),

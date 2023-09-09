@@ -318,6 +318,143 @@ function ButtonWithText(parent, args, text, onclick, id) {
     return button;
 }
 
+
+function getRankData() {
+    let level, goal;
+
+    while (true) {
+        level = game.stats.level - 1n;
+        goal = 2500n + 1475n * level + 25n * level * level;
+        if (game.stats.exp >= goal) {
+            game.stats.exp -= goal;
+            game.stats.level ++;
+        } else break;
+    }
+
+    return {level, goal}
+}
+
+function rankBarLevelPopup(exp, onDone) {
+    game.stats.exp += exp;
+    game.stats.totalExp += exp;
+
+    let popup;
+    scene.append(popup = controls.rect({
+        position: Ex(-270, -90, 50, 50),
+        size: Ex(540, 180),
+        fill: "#444",
+        alpha: 0,
+    }))
+    popup.append(controls.rect({
+        position: Ex(4, 4),
+        size: Ex(-8, -8, 100, 100),
+        fill: "#0007",
+    }), "fill")
+
+    popup.append(controls.gembar({
+        position: Ex(-249, -28, 50, 50),
+        size: Ex(498, 56),
+        fill: "#777a",
+    }), "progress")
+    popup.$progress.append(controls.label({
+        position: Ex(10, -25),
+        align: "left",
+        scale: 25,
+    }), "rank")
+    popup.$progress.append(controls.label({
+        position: Ex(-10, -25, 100),
+        align: "right",
+        style: "italic",
+        scale: 25,
+    }), "title")
+    popup.$progress.append(controls.label({
+        position: Ex(0, 30, 50, 100),
+        scale: 25,
+    }), "goal")
+    
+
+    let popup2;
+    scene.append(popup2 = controls.rect({
+        position: Ex(-150, -180, 50, 50),
+        size: Ex(300, 60),
+        fill: "#444",
+        alpha: 0,
+    }))
+    popup2.append(controls.rect({
+        position: Ex(4, 4),
+        size: Ex(-8, -8, 100, 100),
+        fill: "#0007",
+    }), "fill")
+    popup2.append(controls.label({
+        position: Ex(0, 0, 50, 50),
+        scale: 25,
+    }), "add")
+
+    function init() {
+        game.stats.exp -= exp;
+        let {level, goal} = getRankData();
+        popup.$progress.progress = Number(game.stats.exp) / Number(goal);
+        popup.$progress.$rank.text = "Rank " + game.stats.level.toLocaleString("en-US");
+        popup.$progress.$title.text = titles[level] || titles[titles.count - 1];
+        popup.$progress.$goal.text = (goal - game.stats.exp).toLocaleString("en-US") + " XP to next level";
+        popup2.$add.text = "+" + (exp).toLocaleString("en-US") + " XP";
+        startAnimation(anim1);
+    }
+
+    function anim1(x) {
+        popup.alpha = ease.quart.inout(clamp01(x / 300));
+        popup.position.y = -40 - 50 * ease.quart.inout(clamp01(x / 300));
+        popup2.alpha = ease.quart.inout(clamp01((x - 300) / 300));
+        popup2.position.y = -230 + 50 * ease.quart.inout(clamp01((x - 300) / 300));
+        if (x > 600) {
+            setTimeout(() => startAnimation(anim2), 1000);
+            return true;
+        }
+    }
+
+    let totalExp = Number(exp);
+    let levelUpCooldown = 0;
+    function anim2(x) {
+        levelUpCooldown -= delta;
+        if (levelUpCooldown > 0) return;
+
+        let {level, goal} = getRankData();
+        let inc = BigInt(Math.ceil(Math.max(totalExp / 5000, Number(goal) / 5000) * delta));
+        if (inc > exp) inc = exp;
+        if (inc > goal - game.stats.exp) inc = goal - game.stats.exp;
+        game.stats.exp += inc;
+        exp -= inc;
+        
+        popup.$progress.progress = Number(game.stats.exp) / Number(goal);
+        popup.$progress.$rank.text = "Rank " + game.stats.level.toLocaleString("en-US");
+        popup.$progress.$title.text = titles[level] || titles[titles.count - 1];
+        popup.$progress.$goal.text = (goal - game.stats.exp).toLocaleString("en-US") + " XP to next level";
+        popup2.$add.text = "+" + (exp).toLocaleString("en-US") + " XP";
+
+        if (game.stats.exp >= goal) {
+            levelUpCooldown = 800;
+        } else if (exp == 0) {
+            setTimeout(() => startAnimation(anim3), 1500);
+            return true;
+        }
+    }
+
+    function anim3(x) {
+        popup.alpha = 1 - ease.quart.in(clamp01(x / 500));
+        popup.position.y = -90 + 50 * ease.quart.in(clamp01(x / 500));
+        popup2.alpha = 1 - ease.quart.in(clamp01(x / 500));
+        popup2.position.y = -180 - 50 * ease.quart.in(clamp01(x / 500));
+        if (x > 500) {
+            scene.remove(popup);
+            scene.remove(popup2);
+            onDone?.();
+            return true;
+        }
+    }
+
+    requestAnimationFrame(init)
+}
+
 function formatDuration(ms) {
     let txt = Math.floor((ms /= 60000) % 60) + "m";
     if (ms >= 60) txt = Math.floor((ms /= 60) % 24) + "h " + txt;

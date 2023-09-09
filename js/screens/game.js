@@ -226,9 +226,12 @@ screens.game = function () {
             if (x >= 2500) {
 
                 scene.$board.data.level++;
-                game.stats.exp += scene.$board.exp;
-                game.stats.totalExp += scene.$board.exp;
+                rankBarLevelPopup(scene.$board.exp, () => {
+                    startAnimation(intro);
+                    setTimeout(() => splash("LEVEL " + scene.$board.data.level.toLocaleString("en-US")), 2000);
+                });
                 scene.$board.exp = 0n;
+                scene.$board.speed = 0.25;
                 
                 let board = scene.$board.board;
                 board.scramble();
@@ -241,8 +244,6 @@ screens.game = function () {
                 }
 
                 scene.$board.save();
-                startAnimation(intro);
-                setTimeout(() => splash("LEVEL " + scene.$board.data.level.toLocaleString("en-US")), 2000);
                 return true;
             }
         }

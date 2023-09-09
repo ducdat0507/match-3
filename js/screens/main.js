@@ -34,16 +34,7 @@ screens.main = function () {
         modeButtons.push(button);
     }
 
-    let level, goal;
-
-    while (true) {
-        level = game.stats.level - 1n;
-        goal = 2500n + 1475n * level + 25n * level * level;
-        if (game.stats.exp >= goal) {
-            game.stats.exp -= goal;
-            game.stats.level ++;
-        } else break;
-    }
+    let {level, goal} = getRankData();
 
     function decideMode(mode) {
         currentMode = mode;
