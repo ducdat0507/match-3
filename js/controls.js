@@ -190,7 +190,7 @@ let controls = {
                 let lines;
                 let pos = this.rect.y;
 
-                if (this.oldArgs.width == this.rect.width && this.oldArgs.height == this.rect.height && this.oldArgs.font == ctx.font) {
+                if (this.oldArgs.width == this.rect.width && this.oldArgs.height == this.rect.height && this.oldArgs.font == ctx.font && this.oldArgs.text == this.text) {
                     lines = this.lines;
                 } else if (!this.wrap) {
                     lines = this.text.split("\n");
@@ -216,6 +216,7 @@ let controls = {
                     width: this.rect.width,
                     height: this.rect.height,
                     font: ctx.font,
+                    text: this.text
                 }
 
                 for (let line of lines) {
