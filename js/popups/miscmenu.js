@@ -25,6 +25,7 @@ popups.miscmenu = function (parent) {
     addEntry("How to Play", "help");
     addEntry("Options", "options");
     addEntry("About", "about");
+    addEntry("Changelog", "changelog");
 
     holder.size.y += 20;
 

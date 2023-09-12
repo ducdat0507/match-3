@@ -101,20 +101,18 @@ function Board(args = {}) {
                     }
                     if (vetTiles[x + y * 100] === undefined && y < this.height - 2) {
                         let vet = 1;
-                        let hozIndex = x + y * 100;
                         for (vet; vet < this.height - y; vet++) {
                             if (tile.type == this.get(x, y + vet)?.type) {
                                 let ind = x + (y + vet) * 100
                                 vetTiles[ind] = x + y * 100;
-                                if (hozTiles[ind] !== undefined) hozIndex = hozTiles[ind]
                             } else {
                                 break;
                             }
                         }
                         if (vet >= 3) {
-                            if (matches[hozIndex] && !matches[hozIndex].vetLength) {
-                                matches[hozIndex].vetStart = x + y * 100;
-                                matches[hozIndex].vetLength = vet;
+                            if (matches[x + y * 100] && !matches[x + y * 100].vetLength) {
+                                matches[x + y * 100].vetStart = x + y * 100;
+                                matches[x + y * 100].vetLength = vet;
                                 matches.count++;
                             } else {
                                 matches[x + y * 100] = {
@@ -457,7 +455,7 @@ function rankBarLevelPopup(exp, onDone) {
 
 function formatDuration(ms) {
     let txt = Math.floor((ms /= 60000) % 60) + "m";
-    if (ms >= 60) txt = Math.floor((ms /= 60) % 24) + "h " + txt;
-    if (ms >= 24) txt = Math.floor((ms /= 24)) + "d " + txt;
+    if ((ms /= 60) >= 1) txt = Math.floor(ms % 24) + "h " + txt;
+    if ((ms /= 24) >= 1) txt = Math.floor(ms) + "d " + txt;
     return txt
 }

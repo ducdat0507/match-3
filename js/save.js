@@ -4,6 +4,7 @@ function getStartMeta() {
     return {
         currentPlayer: "",
         players: {},
+        versionIndex: 0,
     }
 }
 
@@ -28,6 +29,7 @@ function load() {
     } catch (e) {
         console.log(e);
         meta = getStartMeta();
+        meta.versionIndex = versionIndex;
     }
     if (!meta.currentPlayer) {
         createPlayer("Player 1");

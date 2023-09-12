@@ -29,8 +29,7 @@ popups.switcher = function (parent) {
         position: Ex(30, 40, 0, 75),
         size: Ex(-60, 60, 100),
     }, "New Player", () => {
-        createPlayer("Player " + (Object.keys(meta.players).length + 1));
-        loadScreen("main");
+        popups.playerName(popup);
     });
 
     ButtonWithText(popup.$content, {

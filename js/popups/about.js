@@ -39,10 +39,14 @@ popups.about = function (parent) {
         text: "Yet Another\nMatch-3 Clone.",
         align: "left",
         scale: 50,
-        style: "900",
+        style: "700",
     }));
 
-    holder.size.y += 200;
+    holder.size.y += 180;
+
+    addLine("Version " + version);
+    
+    holder.size.y += 40;
 
     addTitle("Created by");
     addLine("ducdat0507");

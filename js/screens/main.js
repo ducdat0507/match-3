@@ -28,7 +28,7 @@ screens.main = function () {
         button.append(controls.label({
             position: Ex(0, 0, 50, 50),
             scale: 30,
-            style: "900",
+            style: "700",
             text: name
         }), "text")
         modeButtons.push(button);
@@ -132,4 +132,10 @@ screens.main = function () {
         if (x >= length) isAnimating = false;
         return x >= length;
     });
+    
+    if (meta.versionIndex != versionIndex) {
+        meta.versionIndex = versionIndex;
+        popups.changelog();
+        save();
+    }
 }

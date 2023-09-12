@@ -1,6 +1,9 @@
 let mainCanvas
 let ctx;
 
+let version = "0.1";
+let versionIndex = 1;
+
 function init() {
     mainCanvas = document.getElementById("main-canvas");
     ctx = mainCanvas.getContext("2d");
@@ -10,6 +13,7 @@ function init() {
     bindPointerEvent("onpointerup", "mouseup", "touchend");
     bindPointerEvent("onmousewheel", "wheel");
     window.oncontextmenu = e => false;
+    window.onkeydown = handleKeys;
     
     load();
     // loadRes();
@@ -106,12 +110,13 @@ let mousePos = { x: 0, y: 0 }
 let lastArgs;
 let isTouch;
 
-function updateInMouseState(cts, did = false) {
+function updateInMouseState(cts, clickthrough = false, did = false) {
     let did2 = did;
     for (let ct of [...cts].reverse()) {
-        if (ct.clickthrough) continue;
 
-        if (!did && mousePos.x >= ct.rect.x && mousePos.y >= ct.rect.y
+        let ctr = clickthrough || ct.clickthrough
+
+        if (!ctr && !did && mousePos.x >= ct.rect.x && mousePos.y >= ct.rect.y
             && mousePos.x <= ct.rect.x + ct.rect.width
             && mousePos.y <= ct.rect.y + ct.rect.height) {
             if (!ct.__mouseIn) {
@@ -127,7 +132,7 @@ function updateInMouseState(cts, did = false) {
         }
 
         if (ct.controls.length) {
-            if (updateInMouseState(ct.controls, did2)) did = true;
+            if (updateInMouseState(ct.controls, ctr, did2)) did = true;
         }
 
         did2 = did;
@@ -164,6 +169,7 @@ function doMouseEvent(e, type) {
     e.stopPropagation();
     e.stopImmediatePropagation();
     isTouch = false;
+    return false;
 }
 function doTouchEvent(e, type) {
     for (let touch of e.changedTouches) {
@@ -176,6 +182,7 @@ function doTouchEvent(e, type) {
     e.stopPropagation();
     e.stopImmediatePropagation();
     isTouch = true;
+    return false;
 }
 
 function loadScreen(screenName, clear = true) {
@@ -186,4 +193,35 @@ function loadScreen(screenName, clear = true) {
 function bindPointerEvent(type, mouse, touch) {
     window.addEventListener(mouse, e => doMouseEvent(e, type));
     window.addEventListener(touch, e => doTouchEvent(e, type), { passive: false });
+}
+
+function handleKeys(e) {
+    if (e.repeat) return;
+
+    if (scene.$board) {
+        let swapPos = scene.$board.swapPos;
+        let board = scene.$board.board;
+
+        if (!swapPos) {
+            let rect = scene.$board.rect;
+            let size = Math.min(rect.width / board.width, rect.height / board.height);
+            swapPos = {
+                x: Math.floor((mousePos.x - rect.x) / size),
+                y: Math.floor((mousePos.y - rect.y) / size),
+            }
+        }
+        
+        let { x, y } = swapPos;
+
+        switch (e.key) {
+            case "w": scene.$board.makeMatch(swapPos, { x, y: y - 1 }); break;
+            case "s": scene.$board.makeMatch(swapPos, { x, y: y + 1 }); break;
+            case "a": scene.$board.makeMatch(swapPos, { x: x - 1, y }); break;
+            case "d": scene.$board.makeMatch(swapPos, { x: x + 1, y }); break;
+            case "ArrowUp": scene.$board.swapPos = { x, y: Math.max(y - 1, 0) }; break;
+            case "ArrowDown": scene.$board.swapPos = { x, y: Math.min(y + 1, board.height - 1) }; break;
+            case "ArrowLeft": scene.$board.swapPos = { x: Math.max(x - 1, 0), y }; break;
+            case "ArrowRight": scene.$board.swapPos = { x: Math.min(x + 1, board.width - 1), y }; break;
+        }
+    }
 }

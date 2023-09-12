@@ -31,7 +31,7 @@ function doPopup(parent) {
     popup.append(controls.label({
         position: Ex(-246, -80, 50, 20),
         scale: 50,
-        style: "900",
+        style: "700",
         fill: "#aaa",
         align: "left",
         baseline: "alphabetic",

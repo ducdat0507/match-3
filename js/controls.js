@@ -14,7 +14,7 @@ let controls = {
                 let index = this.controls.indexOf(ct);
                 if (index > 0) {
                     this.controls.splice(index, 1);
-                    if (ct.id && this.controls["$" + id]) delete this.controls["$" + id];
+                    if (ct.id && this.controls["$" + ct.id]) delete this.controls["$" + ct.id];
                 }
             },
 
@@ -83,6 +83,9 @@ let controls = {
         return {
             ...controls.rect(),
 
+            fillHover: "#fff7",
+            fillActive: "#0003",
+
             __mouseActive: false,
 
             onpointerin() {
@@ -97,13 +100,7 @@ let controls = {
                 this.__mouseActive = true;
                 let handler = (e) => {
                     this.__mouseActive = false;
-                    let pos = {
-                        x: e.clientX,
-                        y: e.clientY,
-                    }
-                    if (pos.x >= this.rect.x && pos.y >= this.rect.y
-                        && pos.x <= this.rect.x + this.rect.width
-                        && pos.y <= this.rect.y + this.rect.height) this.onclick();
+                    if (this.__mouseIn) this.onclick();
                     document.removeEventListener("pointerup", handler);
                 }
                 document.addEventListener("pointerup", handler);
@@ -113,6 +110,10 @@ let controls = {
             
             render() {
                 ctx.fillStyle = this.fill;
+                
+                let level = this.__mouseActive * this.__mouseIn;
+                if (!isTouch) level += this.__mouseIn 
+
                 if (this.radius) {
                     let radius = this.radius * scale;
                     ctx.beginPath();
@@ -138,23 +139,21 @@ let controls = {
                         radius, Math.PI, Math.PI * 1.5
                     );
                     ctx.fill();
-                    if (this.__mouseIn) {
-                        ctx.fillStyle = "#ffffff7f";
+                    if (level >= 1) {
+                        ctx.fillStyle = this.fillHover;
                         ctx.fill();
-                        if (this.__mouseActive) {
-                            ctx.fillStyle = "#0000003f";
+                        if (level >= 2) {
+                            ctx.fillStyle = this.fillActive;
                             ctx.fill();
                         }
                     }
                 } else {
                     ctx.fillRect(this.rect.x, this.rect.y, this.rect.width, this.rect.height);
-                    let level = this.__mouseActive * this.__mouseIn;
-                    if (!isTouch) level += this.__mouseIn 
                     if (level >= 1) {
-                        ctx.fillStyle = "#ffffff7f";
+                        ctx.fillStyle = this.fillHover;
                         ctx.fillRect(this.rect.x, this.rect.y, this.rect.width, this.rect.height);
                         if (level >= 2) {
-                            ctx.fillStyle = "#0000003f";
+                            ctx.fillStyle = this.fillActive;
                             ctx.fillRect(this.rect.x, this.rect.y, this.rect.width, this.rect.height);
                         }
                     }
@@ -177,6 +176,8 @@ let controls = {
             align: "center",
             baseline: "middle",
             wrap: false,
+            lines: [],
+            oldArgs: {},
 
             render() {
                 ctx.fillStyle = this.fill;
@@ -186,12 +187,16 @@ let controls = {
                 ctx.textBaseline = this.baseline;
                 ctx.font = this.style + " " + (this.scale * scale) + "px " + this.font;
 
-                let lines = this.text.split("\n");
+                let lines;
                 let pos = this.rect.y;
 
-                if (this.wrap) {
+                if (this.oldArgs.width == this.rect.width && this.oldArgs.height == this.rect.height && this.oldArgs.font == ctx.font) {
+                    lines = this.lines;
+                } else if (!this.wrap) {
+                    lines = this.text.split("\n");
+                } else {
                     let newLines = [];
-                    for (let line of lines) {
+                    for (let line of this.text.split("\n")) {
                         let words = line.split(" ");
                         let newLine = "";
                         for (let word of words) {
@@ -207,14 +212,96 @@ let controls = {
                     lines = newLines;
                 }
 
+                this.oldArgs = {
+                    width: this.rect.width,
+                    height: this.rect.height,
+                    font: ctx.font,
+                }
+
                 for (let line of lines) {
                     ctx.strokeText(line, this.rect.x, pos);
                     ctx.fillText(line, this.rect.x, pos);
                     pos += this.scale * scale * 1.2;
                 }
+
+                this.lines = lines;
             },
             ...args
         }
+    },
+    input(args) {
+        let ct = {
+            ...controls.button(),
+            value: "",
+            type: "text",
+            maxlength: null,
+            mask: true,
+            fillHover: "#fff3",
+            fillActive: "#0000",
+            element: null,
+            
+            onpointerin() {
+                mainCanvas.style.cursor = "text";
+            },
+
+            onclick() {
+                let input = document.createElement("input");
+                input.value = this.value;
+                input.type = this.type;
+                input.maxlength = this.maxlength + "";
+
+                let handler = (e) => {
+                    if (!this.__mouseIn) input.blur();
+                };
+                
+                blurHandler = () => {
+                    input.remove();
+                    document.removeEventListener("pointerdown", handler);
+                    this.element = null;
+                }
+
+                input.oninput = () => {
+                    this.value = input.value;
+                    if (this.maxlength) this.value = this.value.substring(0, this.maxlength);
+                    input.value = this.value;
+                }
+                input.onblur = () => {
+                    blurHandler();
+                }
+
+                document.addEventListener("pointerdown", handler)
+                document.body.append(input);
+                input.focus();
+                this.element = input;
+            },
+
+            onupdate() {
+                this.$content.text = this.value;
+                if (this.element) {
+                    this.element.time = (this.element.time ?? 0) + delta;
+                    ctx.font = this.$content.style + " " + (this.$content.scale) + "px " + this.$content.font;
+                    let width = ctx.measureText(this.element.value.substring(0, this.element.selectionStart)).width;
+                    this.$caret.alpha = Math.cos(this.element.time / 500) / 2 + .5;
+                    this.$caret.position.x = width + this.$content.position.x;
+                } else {
+                    this.$caret.alpha = 0;
+                }
+            },
+
+            ...args
+        }
+        ct.append(controls.rect({
+            position: Ex(30, -15, 0, 50),
+            size: Ex(2, 30),
+            fill: "#fff",
+        }), "caret")
+        ct.append(controls.label({
+            position: Ex(30, 0, 0, 50),
+            scale: 25,
+            font: "Helvetica, Arial, sans-serif",
+            align: "left",
+        }), "content")
+        return ct;
     },
     gembar(args) {
         return {
@@ -253,7 +340,7 @@ let controls = {
                     for (let y = 0; y < height; y++) {
                         count++;
                         if (count > fillArea) break loop;
-                        ctx.fillStyle = "hsl(" + ((time / 20 + (x + y) * 10) % 360) + "deg, 100%, 80%)";
+                        ctx.fillStyle = "hsl(" + ((time / 50 + (x + y) * 5) % 360) + "deg, 100%, 80%)";
                         ctx.fillRect(
                             this.rect.x + (this.borderWidth + this.tileSize * x) * scale, 
                             this.rect.y + (this.borderWidth + this.tileSize * y) * scale, 
@@ -319,11 +406,13 @@ let controls = {
                     let d = startScr + (pos.y - startPos.y) / scale;
                     this.scrollSpd = (d - this.scrollPos) / delta * 1000;
                     this.scrollPos = d;
+                    this.$content.clickthrough = true;
                     scrTime = time;
                 }
                 let uphandler = (e) => {
                     this.__mouseActive = false;
                     if (Math.abs(this.scrollSpd) < 20 || time - scrTime > 100) this.scrollSpd = 0;
+                    this.$content.clickthrough = false;
 
                     document.removeEventListener("pointermove", movehandler);
                     document.removeEventListener("pointerup", uphandler);
@@ -333,7 +422,7 @@ let controls = {
             },
 
             onmousewheel(pos, args) {
-                this.scrollPos -= args.deltaY * 5;
+                this.scrollPos -= Math.sign(args.deltaY) * 50;
             },
 
             ...args
@@ -447,6 +536,8 @@ let controls = {
 
                         if (powerHoz.length >= 4) powers.push(powerHoz);
                         if (powerVet.length >= 4) powers.push(powerVet);
+                        
+                        console.log(this.matches, tiles);
 
                         for (let tile in tiles) {
                             this.board.tiles[tile].popup = popup;

@@ -4,24 +4,40 @@ popups.profile = function (parent) {
     let popup = doPopup(parent);
     popup.$title.text = "Profile";
     
-    popup.$content.append(controls.rect({
-        position: Ex(-200, 0, 50, 25),
-        size: Ex(400, 2),
-        fill: "#777a",
+    popup.$content.append(controls.button({
+        position: Ex(-200, -60, 50, 25),
+        size: Ex(400, 60),
+        fill: "#0000",
+        fillHover: "#fff3",
+        onclick() {
+            popups.playerName(popup, meta.currentPlayer);
+        }
     }), "namebox")
     popup.$content.$namebox.append(controls.label({
-        position: Ex(10, -10),
+        position: Ex(0, 85, 50),
+        baseline: "alphabetic",
+        text: "(click to rename ✏️)",
+        alpha: 0.5,
+        scale: 15,
+    }), "rename")
+    popup.$content.$namebox.append(controls.label({
+        position: Ex(15, 45),
         align: "left", 
         baseline: "alphabetic",
         style: "700",
         text: meta.players[meta.currentPlayer].name,
         scale: 40,
     }), "name")
+    popup.$content.$namebox.append(controls.rect({
+        position: Ex(0, -2, 0, 100),
+        size: Ex(0, 2, 100),
+        fill: "#777a",
+    }), "foot")
     
     let {level, goal} = getRankData();
     
     popup.$content.append(controls.gembar({
-        position: Ex(-249, 100, 50, 25),
+        position: Ex(-249, 120, 50, 25),
         size: Ex(498, 56),
         progress: Number(game.stats.exp) / Number(goal),
         fill: "#777a",

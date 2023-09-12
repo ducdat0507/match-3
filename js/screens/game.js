@@ -99,7 +99,7 @@ screens.game = function () {
         position: Ex(0, 0, 50, 50),
         scale: 50,
         stroke: "black",
-        style: "900",
+        style: "700",
         thickness: 8,
         wrap: true,
     }), "splash")
