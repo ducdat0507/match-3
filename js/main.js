@@ -1,7 +1,7 @@
 let mainCanvas
 let ctx;
 
-let version = "0.1";
+let version = "0.2";
 let versionIndex = 1;
 
 function init() {
@@ -14,9 +14,12 @@ function init() {
     bindPointerEvent("onmousewheel", "wheel");
     window.oncontextmenu = e => false;
     window.onkeydown = handleKeys;
+    window.onbeforeunload = () => {
+        if (scene.$board && scene.$board.fallCount == 0) scene.$board.save();
+    }
     
     load();
-    // loadRes();
+    loadRes();
     loadScreen("intro");
 
     loop();
@@ -43,8 +46,8 @@ function loop(timestamp) {
     let width = mainCanvas.width = window.innerWidth;
     let height = mainCanvas.height = window.innerHeight;
     scale = Math.min(width / 600, height / 800, window.devicePixelRatio);
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, width, height);
+    // ctx.fillStyle = "#000";
+    // ctx.fillRect(0, 0, width, height);
     ctx.lineJoin = "round";
 
 
@@ -54,7 +57,7 @@ function loop(timestamp) {
 
     if (game.options.fpsCounter) {
         ctx.fillStyle = "#fff";
-        ctx.font = (10 * scale) + "px Helvetica, Arial, sans-serif";
+        ctx.font = (10 * scale) + "px " + fontFamily;
         ctx.textAlign = "left";
         ctx.textBaseline = "alphabetic";
         ctx.fillText(
@@ -199,6 +202,8 @@ function handleKeys(e) {
     if (e.repeat) return;
 
     if (scene.$board) {
+        if (scene.$board.clickthrough) return;
+
         let swapPos = scene.$board.swapPos;
         let board = scene.$board.board;
 

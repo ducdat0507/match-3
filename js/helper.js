@@ -8,10 +8,14 @@ function Rect(x, y, width = 0, height = 0) {
 
 function Board(args = {}) {
     let board = {
+
         width: 8,
         height: 8,
         types: 7,
         tiles: {},
+
+        alwaysHaveMoves: true,
+
         get(x, y) {
             return this.tiles[x + y * 100]
         },
@@ -54,13 +58,15 @@ function Board(args = {}) {
                 }
             }
 
-            if (check && fills.length > 0) {
+            if (this.alwaysHaveMoves && check && fills.length > 0) {
                 while (this.findValidMoves().count == 0) {
                     for (let tile of fills) {
                         this.tiles[tile].type = Math.floor(Math.random() * this.types);
                     }
                 }
             }
+
+            return fills;
         },
         scramble() {
             do {
@@ -68,6 +74,7 @@ function Board(args = {}) {
                 let values = keys.map(x => this.tiles[x]);
                 for (let key of keys) {
                     let index = Math.floor(Math.random() * values.length);
+                    if (this.tiles[key].power == "countdown") this.tiles[key].power = "";
                     this.tiles[key] = values.splice(index, 1)[0];
                 }
                 console.log(this.tiles);
@@ -92,6 +99,9 @@ function Board(args = {}) {
                             }
                         }
                         if (hoz >= 3) {
+                            for (let h = 0; h < hoz; h++) {
+                                hozTiles[x + h + y * 100] = x + y * 100;
+                            }
                             matches[x + y * 100] = {
                                 hozStart: x + y * 100,
                                 hozLength: hoz,
@@ -101,16 +111,23 @@ function Board(args = {}) {
                     }
                     if (vetTiles[x + y * 100] === undefined && y < this.height - 2) {
                         let vet = 1;
+                        let hozIndex = x + y * 100;
                         for (vet; vet < this.height - y; vet++) {
                             if (tile.type == this.get(x, y + vet)?.type) {
                                 let ind = x + (y + vet) * 100
                                 vetTiles[ind] = x + y * 100;
+                                if (hozTiles[ind]) hozIndex = hozTiles[ind];
                             } else {
                                 break;
                             }
                         }
                         if (vet >= 3) {
-                            if (matches[x + y * 100] && !matches[x + y * 100].vetLength) {
+                            vetTiles[x + y * 100] = x + y * 100;
+                            if (matches[hozIndex] && !matches[hozIndex].vetLength) {
+                                matches[hozIndex].vetStart = x + y * 100;
+                                matches[hozIndex].vetLength = vet;
+                                matches.count++;
+                            } else if (matches[x + y * 100] && !matches[x + y * 100].vetLength) {
                                 matches[x + y * 100].vetStart = x + y * 100;
                                 matches[x + y * 100].vetLength = vet;
                                 matches.count++;
@@ -332,44 +349,44 @@ function getRankData() {
     return {level, goal}
 }
 
-function rankBarLevelPopup(exp, onDone) {
+function rankBarLevelPopup(exp, onDone, popup = null) {
     game.stats.exp += exp;
     game.stats.totalExp += exp;
 
-    let popup;
-    scene.append(popup = controls.rect({
-        position: Ex(-270, -90, 50, 50),
-        size: Ex(540, 180),
-        fill: "#444",
-        alpha: 0,
-    }))
-    popup.append(controls.rect({
-        position: Ex(4, 4),
-        size: Ex(-8, -8, 100, 100),
-        fill: "#0007",
-    }), "fill")
-
-    popup.append(controls.gembar({
-        position: Ex(-249, -28, 50, 50),
-        size: Ex(498, 56),
-        fill: "#777a",
-    }), "progress")
-    popup.$progress.append(controls.label({
-        position: Ex(10, -25),
-        align: "left",
-        scale: 25,
-    }), "rank")
-    popup.$progress.append(controls.label({
-        position: Ex(-10, -25, 100),
-        align: "right",
-        style: "italic",
-        scale: 25,
-    }), "title")
-    popup.$progress.append(controls.label({
-        position: Ex(0, 30, 50, 100),
-        scale: 25,
-    }), "goal")
+    if (!popup) {
+        scene.append(popup = controls.rect({
+            position: Ex(-270, -90, 50, 50),
+            size: Ex(540, 180),
+            fill: "#444",
+            alpha: 0,
+        }))
+        popup.append(controls.rect({
+            position: Ex(4, 4),
+            size: Ex(-8, -8, 100, 100),
+            fill: "#0007",
+        }), "fill")
     
+        popup.append(controls.gembar({
+            position: Ex(-249, -28, 50, 50),
+            size: Ex(498, 56),
+            fill: "#777a",
+        }), "progress")
+        popup.$progress.append(controls.label({
+            position: Ex(10, -25),
+            align: "left",
+            scale: 25,
+        }), "rank")
+        popup.$progress.append(controls.label({
+            position: Ex(-10, -25, 100),
+            align: "right",
+            style: "italic",
+            scale: 25,
+        }), "title")
+        popup.$progress.append(controls.label({
+            position: Ex(0, 30, 50, 100),
+            scale: 25,
+        }), "goal")
+    }
 
     let popup2;
     scene.append(popup2 = controls.rect({
@@ -458,4 +475,20 @@ function formatDuration(ms) {
     if ((ms /= 60) >= 1) txt = Math.floor(ms % 24) + "h " + txt;
     if ((ms /= 24) >= 1) txt = Math.floor(ms) + "d " + txt;
     return txt
+}
+
+function getAwardXP(exp) {
+    let min = (...args) => args.reduce((m, e) => e < m ? e : m);
+
+    if (currentMode == "classic") exp = exp * min(100n + scene.$board.data.level * 5n, 200n) / 100n;
+    if (currentMode == "action") exp = exp * min(75n + scene.$board.data.level * 5n, 200n) / 100n;
+    if (currentMode == "speed") exp = exp * min(100n + scene.$board.data.maxLevel * 3n, 200n) / 100n;
+    return exp;
+}
+
+function getLevelGoal(level) {
+    return currentMode == "classic" ? 150 + 150 * level : 
+           currentMode == "action" ? 150 + 250 * level :
+           currentMode == "endless" ? Math.min(250 + 250 * level, 5000) :
+           Infinity;
 }

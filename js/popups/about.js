@@ -50,13 +50,54 @@ popups.about = function (parent) {
 
     addTitle("Created by");
     addLine("ducdat0507");
+    ButtonWithText(holder, {
+        position: Ex(30, holder.size.y + 20),
+        size: Ex(-60, 60, 100),
+    }, "Check out my Homepage!", () => {
+        window.open("https://ducdat0507.github.io", '_blank');;
+    });
+    
+    holder.size.y += 110;
+
+    addTitle("This game is open source!");
+    ButtonWithText(holder, {
+        position: Ex(30, holder.size.y + 20),
+        size: Ex(-60, 60, 100),
+    }, "GitHub Repository", () => {
+        window.open("https://github.com/ducdat0507/match-3", '_blank');;
+    });
+    
+    holder.size.y += 110;
+
+    addTitle("Made with HTML5 and pure vanilla JavaScript.");
+    addTitle("(zero libraries used!!!!)");
     
     holder.size.y += 40;
 
-    addTitle("Inspired by other match-3 games (duh),");
+    addTitle("This game is inspired by other match-3 games (duh),");
     addTitle("most dominantly the Bejeweled series and such.");
+    
+    holder.size.y += 40;
 
-    holder.size.y += 50;
+    addTitle("Font attribution:");
+    addLine('"Overused Grotesk" by RandomMaerks');
+    ButtonWithText(holder, {
+        position: Ex(30, holder.size.y + 20),
+        size: Ex(-60, 60, 100),
+    }, "View Font License", () => {
+        window.open("./css/FONT-LICENSE.txt", '_blank');;
+    });
+
+    holder.size.y += 1110;
+
+    addTitle("Not made with Unity");
+    holder.append(controls.image({
+        position: Ex(-20, holder.size.y + 10, 50),
+        size: Ex(40, 40),
+        src: res.images["no-unity"],
+    }));
+    
+    holder.size.y += 100;
 
     ButtonWithText(popup.$content, {
         position: Ex(30, 120, 0, 75),

@@ -5,9 +5,9 @@ screens.main = function () {
     function makeModeButton(target, name, position) {
         let button;
         scene.append(button = controls.button({
-            position: Ex(position.x - 80, position.y - 80, 50, 50),
-            size: Ex(160, 160),
-            radius: 80,
+            position: Ex(position.x - 60, position.y - 100, 50, 50),
+            size: Ex(120, 120),
+            radius: 60,
             fill: "#aaa7",
             target,
             onclick() {
@@ -22,27 +22,41 @@ screens.main = function () {
         button.append(controls.rect({
             position: Ex(2, 2),
             size: Ex(-4, -4, 100, 100),
-            radius: 80,
-            fill: "#000a",
+            radius: 60,
+            fill: "#000a"
         }), "fill")
         button.append(controls.label({
             position: Ex(0, 0, 50, 50),
             scale: 30,
             style: "700",
-            text: name
+            text: name,
+            stroke: "#000",
+            thickness: 8,
         }), "text")
         modeButtons.push(button);
     }
 
     let {level, goal} = getRankData();
 
-    function decideMode(mode) {
+    function decideMode(mode, force = false) {
+        if (mode == "?????") {
+            isAnimating = false;
+            popups.tbd();
+            return;
+        }
         currentMode = mode;
+        if (!force && mode != "endless" && game.boards[mode]) {
+            isAnimating = false;
+            popups.continue(false, mode, decideMode);
+            return;
+        }
         startAnimation(x => {
             for (let button of modeButtons) {
                 button.clickthrough = true;
                 let size = button.size.x = button.size.y;
                 if (button.target == mode) {
+                    button.radius = button.$fill.radius = 60 + 20 * ease.quart.out(clamp01(x / 500));
+                    size = button.size.x = button.size.y = button.radius * 2;
                     button.position.x = (button.position.x + size / 2) / 1e6 ** (delta / 1000) - size / 2;
                     button.position.y = (button.position.y + size / 2) / 1e6 ** (delta / 1000) - size / 2;
                     button.position.ey = 50 - clamp01(ease.cubic.in((x - 1000) / 1000)) * 75;
@@ -59,7 +73,11 @@ screens.main = function () {
         })
     }
 
-    makeModeButton("endless",     "ENDLESS",    Ex(0, 0));
+    makeModeButton("classic",     "CLASSIC",    Ex(-125, -125));
+    makeModeButton("speed",       "SPEED",      Ex(125, -125));
+    makeModeButton("?????",       "?????",      Ex(0, 0));
+    makeModeButton("action",      "ACTION",     Ex(-125, 125));
+    makeModeButton("endless",     "ENDLESS",    Ex(125, 125));
     
 
     scene.append(controls.button({
@@ -114,6 +132,16 @@ screens.main = function () {
                 scene.$profile.size.x = 396;
                 scene.$switchbtn.position.x = -270;
                 scene.$menubtn.position.x = 210;
+            }
+            
+            for (let button of modeButtons) {
+                if (button.__mouseIn) {
+                    button.$text.stroke = "hsl(" + (time / 10) + "deg, 100%, 15%)";
+                    button.$text.fill = "hsl(" + (time / 10 + 40) + "deg, 100%, 85%)";
+                } else {
+                    button.$text.stroke = "#000";
+                    button.$text.fill = "#fff";
+                }
             }
         }
     }), "logic")

@@ -1,11 +1,19 @@
-popups.help = function (parent) {
+popups.scores = function (parent) {
     if (popupAnim) return;
 
     let popup = doPopup(parent);
-    popup.$title.text = "How to Play";
-    
+    popup.$title.text = "High Scores";
+
     let offset = 0;
     let targetOffset = 0;
+
+    popup.$content.append(controls.scroller({
+        position: Ex(0, 0, 0, 25),
+        size: Ex(0, 100, 100, 50),
+        fill: 0
+    }), "view");
+
+    let holder = popup.$content.$view.$content;
 
     popup.$content.append(controls.scroller({
         position: Ex(0, -100, 0, 25),
@@ -92,19 +100,40 @@ popups.help = function (parent) {
         }
     }), "logic");
 
-    popup.$content.append(controls.label({
-        position: Ex(0, -180, 50, 50),
-        size: Ex(-60, 0, 100),
-        scale: 25,
-        wrap: true,
-    }), "body")
+    let index = 0;
+    function addScoreEntry(title, data, back) {
+        let y = holder.size.y;
+        if (back) holder.append(controls.rect({
+            position: Ex(0, y),
+            size: Ex(0, 60, 100),
+            fill: "#fff1",
+        }));
+        index++;
+        holder.append(controls.label({
+            position: Ex(80, y + 30),
+            text: index + ".",
+            scale: 25,
+            align: "right",
+        }));
+        holder.append(controls.label({
+            position: Ex(100, y + 30),
+            text: title,
+            scale: 25,
+            align: "left",
+        }));
+        holder.append(controls.label({
+            position: Ex(-30, y + 30, 100),
+            text: data,
+            scale: 25,
+            align: "right",
+        }));
+        holder.size.y += 60;
+    }
 
     let modeList = {
-        general: "General",
         classic: "Classic",
         speed: "Speed",
         action: "Action",
-        endless: "Endless",
     }
     let modeKeys = Object.keys(modeList);
     let viewingMode = "";
@@ -116,30 +145,14 @@ popups.help = function (parent) {
         popup.$content.$title.$text.text = modeList[modeKeys[keyIndex]];
         popup.$content.$title.$textnext.text = modeList[modeKeys[(keyIndex + 1) % modeKeys.length]];
         
-        popup.$content.$body.text = {
-            general: 
-                "\n\nSwap adjacent tiles to make matches of 3 in a row.\n\n" +
-                "\n\nEarn more points by matching more than 3 tiles in a row or making chain reactions.\n\n" +
-                "\n\nMake a match of 4+ tiles to obtain special tiles with different properties!",
-            classic: 
-                "\n\nMake matches to fill up the rainbow meter below the board and level up.\n\n" +
-                "\n\nYour level multiply your score! Level up to gain points faster.\n\n" +
-                "\n\nTry not to run out of moves! Once you do, it's game over!",
-            speed: 
-                "\n\nMake matches to fill up the multiplier meter and score more points.\n\n" +
-                "\n\nThe multiplier meter depletes over time, so try to make matches quickly!\n\n" +
-                "\n\nYou only have 5 minutes. Make every second count!",
-            action: 
-                "\n\nMake matches to fill up the rainbow meter below the board and level up.\n\n" +
-                "\n\nYour level multiply your score! Level up to gain points faster.\n\n" +
-                "\n\nCountdown tiles will drop into the board. Don't let any count to zero!",
-            endless: 
-                "\n\n\n\n\n\n\n\n" +
-                "\n\nIn this mode, the game can't end. Reach your inner peace with this stress-free mode!\n\n",
-        }[mode];
+        holder.controls = [];
+        popup.$content.$view.scrollPos = popup.$content.$view.scrollSpd =  holder.size.y = index = 0;
+        for (let score of meta.scores[mode]) {
+            addScoreEntry(meta.players[score.id]?.name ?? score.name, BigInt(score.score).toLocaleString("en-US"), index % 2 - 1)
+        }
     }
 
-    setMode(scene.$board ? currentMode : "general");
+    setMode("classic");
 
     ButtonWithText(popup.$content, {
         position: Ex(30, 120, 0, 75),

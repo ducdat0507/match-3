@@ -53,7 +53,7 @@ popups.options = function (parent) {
     addTitle("Display");
     addToggle("fpsCounter", "Show FPS counter");
 
-    holder.size.y += 50;
+    holder.size.y += 110;
 
     ButtonWithText(popup.$content, {
         position: Ex(30, 120, 0, 75),

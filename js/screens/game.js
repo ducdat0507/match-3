@@ -1,5 +1,55 @@
 screens.game = function () {
 
+    let boardArgs = {}
+    let boardData = {}
+    let onupdate = () => {}
+    
+    if (currentMode == "classic") {
+        boardArgs.alwaysHaveMoves = false;
+        onupdate = () => {
+            scene.$board.scoreMulti = scene.$board.data.level;
+        }
+    } else if (currentMode == "action") {
+        boardArgs.types = 6;
+        onupdate = () => {
+            scene.$board.scoreMulti = scene.$board.data.level;
+        }
+    } else if (currentMode == "speed") {
+        scene.append(controls.base({
+            position: Ex(-10000, -10000),
+            size: Ex(180, 60),
+        }), "multibox")
+        scene.$multibox.append(controls.rect({
+            position: Ex(0, 0),
+            size: Ex(0, 0, 100, 100),
+            fill: "#888a",
+        }), "fill")
+        scene.$multibox.append(controls.label({
+            position: Ex(0, 0, 50, 50),
+            scale: 300,
+            style: "700",
+            fill: "#fff",
+        }), "text")
+
+        boardData.time = 300;
+        boardData.xpOffset = 0;
+        boardData.maxLevel = 1n;
+        onupdate = () => {
+            if (!scene.$board.paused) {
+                scene.$board.data.xpOffset = Math.min(scene.$board.data.xpOffset + Number(scene.$board.data.level) * delta / 1000, Number(scene.$board.exp));
+                scene.$board.data.level = (scene.$board.exp - BigInt(Math.floor(scene.$board.data.xpOffset || 0))) / 50n + 1n;
+                if (scene.$board.data.level > scene.$board.data.maxLevel) scene.$board.data.maxLevel = scene.$board.data.level;
+            }
+            scene.$multibox.position = scene.$board.position;
+            scene.$multibox.size = scene.$board.size;
+            let xpDiff = Number(scene.$board.exp) - scene.$board.data.xpOffset;
+            scene.$multibox.$fill.size.ey = (xpDiff % 50) * 2;
+            scene.$multibox.$fill.position.ey = 100 - scene.$multibox.$fill.size.ey;
+            scene.$multibox.$text.text = scene.$board.data.level > 1n ? scene.$board.data.level.toLocaleString("en-US") + "x" : "";
+            scene.$board.scoreMulti = 5n * scene.$board.data.level;
+        }
+    }
+
     // The Score
     scene.append(controls.rect({
         position: Ex(-10000, -10000),
@@ -86,10 +136,14 @@ screens.game = function () {
 
     // The board
     scene.append(controls.board({
+        board: Board({
+            types: boardArgs.types ?? 7
+        }),
         position: Ex(-10000, -10000),
         size: Ex(600, 600),
         data: {
             level: 1n,
+            ...boardData
         },
         clickthrough: true
     }), "board")
@@ -104,6 +158,7 @@ screens.game = function () {
         wrap: true,
     }), "splash")
 
+    scene.$board.board.alwaysHaveMoves = boardArgs.alwaysHaveMoves ?? scene.$board.board.alwaysHaveMoves;
 
     var introFactor = 1;
     let isAnimating = true;
@@ -111,15 +166,28 @@ screens.game = function () {
     
     scene.append(controls.base({
         onupdate() {
-            if (!scene.$board.paused) game.stats.timePlayed += delta
+            if (!scene.$board.paused) {
+                game.stats.timePlayed += delta;
+                if (currentMode == "speed" && !isAnimating) scene.$board.data.time -= delta / 1000;
+            }
+
+            onupdate();
 
             scene.$score.text = (scene.$board.score - BigInt(Math.round(scene.$board.lerpScore))).toLocaleString("en-US");
             scene.$hintbtn.$fill.$bar.size = Ex(0, 0, Math.min(Math.max(scene.$board.hintCooldown / 5000, 0), 1) * 100, 100);
 
             let level = Number(scene.$board.data.level) - 1;
-            let goal = Math.min(250 + 250 * level, 5000);
-            scene.$level.text = "Level " + scene.$board.data.level.toLocaleString("en-US");
-            scene.$progress.progress += (Number(scene.$board.exp) / goal - scene.$progress.progress) * (1 - 0.01 ** (delta / 1000));
+
+            let goal = getLevelGoal(level);
+
+            if (currentMode == "speed") {
+                let time = Math.max(scene.$board.data.time, 0)
+                scene.$level.text = Math.floor(time / 60) + ":" + Math.floor(time % 60).toFixed(0).padStart(2, "0");
+                scene.$progress.progress = (scene.$board.data.time / 300);
+            } else {
+                scene.$level.text = "Level " + scene.$board.data.level.toLocaleString("en-US");
+                scene.$progress.progress += (Number(scene.$board.exp) / goal - scene.$progress.progress) * (1 - 0.01 ** (delta / 1000));
+            }
 
             if (window.innerWidth / scale >= 1000) {
                 scene.$scorebox.position = Ex(-450, -300, 50, 50);
@@ -168,7 +236,8 @@ screens.game = function () {
                         levelUp();
                     } else if (scene.$board.moves.count == 0) {
                         if (currentMode == "classic") {
-                            
+                            splash("NO MORE MOVES");
+                            gameOver();
                         } else {
                             let tiles = Object.values(scene.$board.board.tiles);
                             let tile;
@@ -177,8 +246,16 @@ screens.game = function () {
                             tile.type = 7;
                             tile.power = "cube"
                         }
+                    } else if (currentMode == "action" && Object.values(scene.$board.board.tiles).find((x => !x?.anim && x?.power == "countdown" && x.countdown <= 0))) {
+                        splash("GAME OVER");
+                        gameOver();
                     } else {
                         scene.$board.save();
+                    }
+                } else if (waiter > 2) {
+                    if (currentMode == "speed" && scene.$board.data.time <= 0 && game.boards["speed"]) {
+                        splash("TIME'S UP");
+                        gameOver();
                     }
                 }
             } else {
@@ -225,8 +302,11 @@ screens.game = function () {
             introFactor = ease.quart.in(clamp01((x - 1000) / 1000));
             if (x >= 2500) {
 
+                let exp = getAwardXP(scene.$board.exp);
+
                 scene.$board.data.level++;
-                rankBarLevelPopup(scene.$board.exp, () => {
+
+                rankBarLevelPopup(exp, () => {
                     for (let x = 0; x < board.width; x++) {
                         for (let y = 0; y < board.height; y++) {
                             let tile = board.tiles[x + y * 100];
@@ -243,14 +323,24 @@ screens.game = function () {
                 let board = scene.$board.board;
                 board.scramble();
 
+                isAnimating = false;
+
                 scene.$board.save();
                 return true;
             }
         }
 
+        isAnimating = true;
+
         scene.$board.clickthrough = true;
         splash("LEVEL COMPLETED");
         startAnimation(anim1);
+    }
+
+    function gameOver() {
+        delete game.boards[currentMode];
+        save();
+        setTimeout(() => popups.result(), 3000);
     }
 
     scene.$board.load();

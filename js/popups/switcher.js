@@ -27,9 +27,16 @@ popups.switcher = function (parent) {
 
     ButtonWithText(popup.$content, {
         position: Ex(30, 40, 0, 75),
-        size: Ex(-60, 60, 100),
+        size: Ex(-40, 60, 50),
     }, "New Player", () => {
         popups.playerName(popup);
+    });
+    
+    ButtonWithText(popup.$content, {
+        position: Ex(10, 40, 50, 75),
+        size: Ex(-40, 60, 50),
+    }, "Manage Storage", () => {
+        popups.storage(popup);
     });
 
     ButtonWithText(popup.$content, {

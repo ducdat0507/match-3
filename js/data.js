@@ -1,3 +1,5 @@
+let fontFamily = "'Overused Grotesk', Helvetica, Arial, sans-serif";
+
 let titles = [
     "Novice",
     "Apprentice",

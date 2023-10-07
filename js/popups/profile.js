@@ -37,8 +37,8 @@ popups.profile = function (parent) {
     let {level, goal} = getRankData();
     
     popup.$content.append(controls.gembar({
-        position: Ex(-249, 120, 50, 25),
-        size: Ex(498, 56),
+        position: Ex(-248, 120, 50, 25),
+        size: Ex(496, 56),
         progress: Number(game.stats.exp) / Number(goal),
         fill: "#777a",
     }), "progress")
@@ -63,9 +63,16 @@ popups.profile = function (parent) {
     
     ButtonWithText(popup.$content, {
         position: Ex(30, 40, 0, 75),
-        size: Ex(-60, 60, 100),
+        size: Ex(-40, 60, 50),
     }, "Statistics", () => {
         popups.stats(popup);
+    });
+
+    ButtonWithText(popup.$content, {
+        position: Ex(10, 40, 50, 75),
+        size: Ex(-40, 60, 50),
+    }, "High Scores", () => {
+        popups.scores(popup);
     });
 
     ButtonWithText(popup.$content, {

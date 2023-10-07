@@ -43,6 +43,14 @@ popups.changelog = function (parent) {
             baseline: "top",
         }));
     }
+
+    addTitle("v0.2");
+    addItem("Three new gamemodes: Classic, Action, and Speed!");
+    addItem("Changed the default game font to Overused Grotesk.");
+    addItem("Added high score leaderboards for non-endless game modes.");
+    addItem("Polished most of the user interface.");
+    addItem("Implemented a player backup system.");
+    addItem("Tweaked and fixed the game logic (again).");
     
     addTitle("v0.1");
     addItem("The game now keeps a changelog! You'll see this panel pop up whenever a content update has been published.");

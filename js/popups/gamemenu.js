@@ -15,6 +15,7 @@ popups.gamemenu = function (parent) {
         position: Ex(30, 120, 0, 75),
         size: Ex(-40, 60, 50),
     }, "Main Menu", () => {
+        if (scene.$board.fallCount == 0) scene.$board.save();
         loadScreen("main");
     });
 

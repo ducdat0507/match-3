@@ -20,9 +20,9 @@ screens.intro = function () {
     }), "action")
 
     scene.append(controls.label({
-        position: Ex(0, -50, 50, 100),
+        position: Ex(0, -60, 50, 100),
         scale: 15,
-        text: "Game created by ducdat0507",
+        text: "Version " + version + "\nGame created by ducdat0507",
         style: "italic",
         alpha: 0,
     }), "info")
