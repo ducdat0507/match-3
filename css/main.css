@@ -46,5 +46,6 @@ noscript {
     display: flex;
     flex-direction: row;
     text-align: center;
-    font-size: 10vw;
+    font-size: 5vw;
+    font-weight: 700;
 }
