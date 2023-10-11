@@ -3,6 +3,7 @@
     src:
         url('OverusedGrotesk-VF.woff2') format('woff2 supports variations'),
         url('OverusedGrotesk-VF.woff2') format('woff2-variations');
+    font-weight: 300 700;
     font-feature-settings: "ss03", "ss05", "ss06";
 }
 
