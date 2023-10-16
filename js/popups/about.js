@@ -21,7 +21,7 @@ popups.about = function (parent) {
             fill: "#aaa",
             baseline: "top",
         }));
-        holder.size.y += 35;
+        holder.size.y += 24;
     }
     function addLine(title) {
         let y = holder.size.y;
@@ -31,7 +31,7 @@ popups.about = function (parent) {
             scale: 25,
             baseline: "top",
         }));
-        holder.size.y += 40;
+        holder.size.y += 30;
     }
     
     holder.append(controls.label({
@@ -48,28 +48,27 @@ popups.about = function (parent) {
     
     holder.size.y += 40;
 
-    addTitle("Created by");
-    addLine("ducdat0507");
+    addTitle("Created by:");
     ButtonWithText(holder, {
-        position: Ex(30, holder.size.y + 20),
+        position: Ex(30, holder.size.y + 30),
         size: Ex(-60, 60, 100),
-    }, "Check out my Homepage!", () => {
+    }, "ducdat0507", () => {
         window.open("https://ducdat0507.github.io", '_blank');;
     });
     
-    holder.size.y += 110;
+    holder.size.y += 120;
 
     addTitle("This game is open source!");
     ButtonWithText(holder, {
-        position: Ex(30, holder.size.y + 20),
+        position: Ex(30, holder.size.y + 30),
         size: Ex(-60, 60, 100),
     }, "GitHub Repository", () => {
         window.open("https://github.com/ducdat0507/match-3", '_blank');;
     });
     
-    holder.size.y += 110;
+    holder.size.y += 120;
 
-    addTitle("Made with HTML5 and pure vanilla JavaScript.");
+    addTitle("Made with HTML5 and vanilla JavaScript.");
     addTitle("(zero libraries used!!!!)");
     
     holder.size.y += 40;
@@ -80,24 +79,36 @@ popups.about = function (parent) {
     holder.size.y += 40;
 
     addTitle("Font attribution:");
-    addLine('"Overused Grotesk" by RandomMaerks');
     ButtonWithText(holder, {
-        position: Ex(30, holder.size.y + 20),
+        position: Ex(30, holder.size.y + 30),
+        size: Ex(-60, 60, 100),
+    }, '"Overused Grotesk" by RandomMaerks', () => {
+        window.open("https://github.com/RandomMaerks/Overused-Grotesk/", '_blank');;
+    });
+    holder.size.y += 70;
+    holder.append(controls.rect({
+        position: Ex(30, holder.size.y + 30),
+        size: Ex(-60, 2, 100),
+        fill: "#fff7",
+    }));
+    holder.size.y += 12;
+    ButtonWithText(holder, {
+        position: Ex(30, holder.size.y + 30),
         size: Ex(-60, 60, 100),
     }, "View Font License", () => {
         window.open("./css/FONT-LICENSE.txt", '_blank');;
     });
 
-    holder.size.y += 1110;
+    holder.size.y += 120;
 
     addTitle("Not made with Unity");
     holder.append(controls.image({
-        position: Ex(-20, holder.size.y + 10, 50),
+        position: Ex(-20, holder.size.y + 20, 50),
         size: Ex(40, 40),
         src: res.images["no-unity"],
     }));
     
-    holder.size.y += 100;
+    holder.size.y += 110;
 
     ButtonWithText(popup.$content, {
         position: Ex(30, 120, 0, 75),

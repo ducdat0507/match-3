@@ -427,8 +427,8 @@ let controls = {
                 let isScrolling = false;
                 let movehandler = (e) => {
                     let pos = {
-                        x: e.clientX,
-                        y: e.clientY,
+                        x: e.clientX * resScale,
+                        y: e.clientY * resScale,
                     }
                     if (!isScrolling && Math.abs(startPos.y - pos.y) < 10 * scale) return;
                     isScrolling = true;
@@ -452,6 +452,22 @@ let controls = {
 
             onmousewheel(pos, args) {
                 this.scrollPos -= Math.sign(args.deltaY) * 50;
+            },
+
+            render() {
+                ctx.fillStyle = this.fill;
+                ctx.fillRect(this.rect.x, this.rect.y, this.rect.width, this.rect.height);
+                let fraction = this.$content.rect.height / this.rect.height;
+                if (fraction > 1) {
+                    ctx.fillStyle = "#aaa";
+                    let offset = (this.rect.y - this.$content.rect.y);
+                    ctx.fillRect(
+                        this.rect.x + this.rect.width - 5 * scale, 
+                        this.rect.y + this.rect.height * offset / this.rect.height / fraction, 
+                        5 * scale, 
+                        this.rect.height / fraction
+                    );
+                } 
             },
 
             ...args
@@ -479,6 +495,8 @@ let controls = {
 
             cascade: 0,
             powerCascade: 0,
+            scoreCascade: 0n,
+            expCascade: 0n,
             
             scorePopups: [],
             effects: [],
@@ -492,6 +510,7 @@ let controls = {
             pauseFader: 0,
             speed: 0.25,
 
+            speedMulti: 1,
             scoreMulti: 1n,
 
             __mouseActive: false,
@@ -701,8 +720,8 @@ let controls = {
                             limit = Math.max((this.board.tiles[count * 100 + +id]?.offset.y - 0.001 || 0), limit);
                             count++;
                         }
-                        tile.offset.y = Math.max(tile.offset.y + tile.velocity.y * delta * this.speed / 1000, limit);
-                        tile.velocity.y = tile.offset.y > limit ? tile.velocity.y - delta * this.speed / 30 : Math.max(0, tile.velocity.y);
+                        tile.offset.y = Math.max(tile.offset.y + tile.velocity.y * delta * this.speed * this.speedMulti / 1000, limit);
+                        tile.velocity.y = tile.offset.y > limit ? tile.velocity.y - delta * this.speed * this.speedMulti / 30 : Math.max(0, tile.velocity.y);
                     } else {
                         fallCount --;
                     }
@@ -850,7 +869,7 @@ let controls = {
                                 if (Math.abs(y - py) < 1.25) {
                                     tTile.anim = "power-match";
                                     tTile.animTime = tid != id && tTile.power == "flame" ? 0.25 : 0;
-                                    tTile.animArgs = { score: tid == id ? 60n : 15n, exp: 1n, popup };
+                                    tTile.animArgs = { score: tTile.power == "flame" ? 60n : 15n, exp: 1n, popup };
                                     tTile.trigger = tile;
                                     tTile.popup = popup;
                                 } else if (py - y < 0) {
@@ -980,15 +999,18 @@ let controls = {
                         if (matchScores[id].manual && !manual) {
                             this.cascade = 1;
                             this.powerCascade = 0;
+                            this.scoreCascade = this.expCascade = 0n;
                             manual = true;
                         } else this.cascade++;
 
                         matchScores[id].score *= BigInt(this.cascade) * this.scoreMulti;
                         matchScores[id].exp += BigInt(this.cascade) * 3n;
                         this.score += matchScores[id].score;
+                        this.scoreCascade += matchScores[id].score;
                         this.exp += matchScores[id].exp;
+                        this.expCascade += matchScores[id].exp;
                         this.lerpScore += Number(matchScores[id].score);
-                        this.scorePopups.push(matchScores[id]);
+                        if (game.options.scorePopups) this.scorePopups.push(matchScores[id]);
                     }
                 }
                 
@@ -999,21 +1021,25 @@ let controls = {
                         powerScores[id].score *= this.scoreMulti;
                         powerScores[id].type = "power";
                         this.score += powerScores[id].score;
+                        this.scoreCascade += powerScores[id].score;
                         this.exp += powerScores[id].exp;
+                        this.expCascade += powerScores[id].exp;
                         this.lerpScore += Number(powerScores[id].score);
-                        if (powerScores[id].popup) {
-                            powerScores[id].popup.score += powerScores[id].score;
-                            powerScores[id].popup.exp += powerScores[id].exp;
-                            powerScores[id].popup.lifetime = 0;
-                            if (this.scorePopups[this.scorePopups.length - 1] != powerScores[id].popup) {
-                                let index = this.scorePopups.indexOf(powerScores[id].popup);
-                                if (index >= 0) {
-                                    this.scorePopups.splice(index, 1);
-                                    this.scorePopups.push(powerScores[id].popup);
+                        if (game.options.scorePopups) {
+                            if (powerScores[id].popup) {
+                                powerScores[id].popup.score += powerScores[id].score;
+                                powerScores[id].popup.exp += powerScores[id].exp;
+                                powerScores[id].popup.lifetime = 0;
+                                if (this.scorePopups[this.scorePopups.length - 1] != powerScores[id].popup) {
+                                    let index = this.scorePopups.indexOf(powerScores[id].popup);
+                                    if (index >= 0) {
+                                        this.scorePopups.splice(index, 1);
+                                        this.scorePopups.push(powerScores[id].popup);
+                                    }
                                 }
+                            } else {
+                                this.scorePopups.push(powerScores[id]);
                             }
-                        } else {
-                            this.scorePopups.push(powerScores[id]);
                         }
                     }
                 }
@@ -1177,7 +1203,7 @@ let controls = {
                 }
                 
                 if (this.swapPos) {
-                    if (Math.abs(pos.x - this.swapPos.x) + Math.abs(pos.y - this.swapPos.y) == 1) {
+                    if (Math.abs(pos.x - this.swapPos.x) + Math.abs(pos.y - this.swapPos.y) == 1 && !game.options.forceSwipe) {
                         this.makeMatch(this.swapPos, pos);
                         this.swapPos = null;
                     } else if (Math.abs(pos.x - this.swapPos.x) + Math.abs(pos.y - this.swapPos.y) == 0) {
@@ -1638,22 +1664,24 @@ let controls = {
                 }
 
                 for (let popup of this.scorePopups) {
-                    if (popup.score > 0) {
+                    if (popup.text || popup.score > 0) {
                         let exp = Number(popup.exp);
+                        let str = popup.text ?? popup.score.toLocaleString("en-US");
 
                         let tScale = ease(Math.min(popup.time ?? 0, 1)) 
                             * (ease(Math.min(popup.lifetime ?? 0, 1)) * .25 + .75) 
                             * scale;
                         if (popup.type == "power") tScale *= .75;
+                        if (popup.type == "total") tScale *= .75;
                         else tScale *= Math.max(Math.min(exp / 20 + .5, 1.5), 1);
 
                         ctx.globalAlpha = Math.min(2 - popup.lifetime * 2, 1);
-                        ctx.font = "bold " + 40 * tScale + "px " + fontFamily;
+                        ctx.font = (popup.type == "total" ? "" : "bold ") + 40 * tScale + "px " + fontFamily;
                         ctx.strokeStyle = colors[popup.color] + "77";
 
                         ctx.lineWidth = (popup.type == "power" ? 8 : 10) * tScale;
                         ctx.strokeText(
-                            popup.score.toLocaleString("en-US"),
+                            str,
                             this.rect.x + popup.pos.x * size, 
                             this.rect.y + (popup.pos.y - (popup.time ?? 0)) * size, 
                         );
@@ -1661,7 +1689,7 @@ let controls = {
                         if (popup.exp > 10) {
                             ctx.strokeStyle = "hsla(" + popup.time * 1000 + "deg, 100%, 50%, " + clamp01(exp / 10 - 1) + ")";
                             ctx.strokeText(
-                                popup.score.toLocaleString("en-US"),
+                                str,
                                 this.rect.x + popup.pos.x * size, 
                                 this.rect.y + (popup.pos.y - (popup.time ?? 0)) * size, 
                             );
@@ -1671,12 +1699,12 @@ let controls = {
                         ctx.lineWidth = 5 * tScale;
 
                         ctx.strokeText(
-                            popup.score.toLocaleString("en-US"),
+                            str,
                             this.rect.x + popup.pos.x * size, 
                             this.rect.y + (popup.pos.y - (popup.time ?? 0)) * size, 
                         );
                         ctx.fillText(
-                            popup.score.toLocaleString("en-US"),
+                            str,
                             this.rect.x + popup.pos.x * size, 
                             this.rect.y + (popup.pos.y - (popup.time ?? 0)) * size, 
                         );
@@ -1684,7 +1712,7 @@ let controls = {
                         if (popup.exp > 20) {
                             ctx.fillStyle = "hsla(" + (popup.time + 0.2) * 1000 + "deg, 100%, 25%, " + clamp01(exp / 20 - 1) + ")";
                             ctx.fillText(
-                                popup.score.toLocaleString("en-US"),
+                                str,
                                 this.rect.x + popup.pos.x * size, 
                                 this.rect.y + (popup.pos.y - (popup.time ?? 0)) * size, 
                             );

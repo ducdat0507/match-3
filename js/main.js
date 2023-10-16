@@ -1,7 +1,7 @@
 let mainCanvas
 let ctx;
 
-let version = "0.2";
+let version = "0.3";
 let versionIndex = 1;
 
 function init() {
@@ -33,6 +33,7 @@ let fps = [];
 let scene = controls.base();
 let screens = {}
 let scale = 1;
+let resScale = 1;
 
 let currentMode = "";
 
@@ -43,9 +44,10 @@ function loop(timestamp) {
     if (fps.length > 60) fps.shift();
     delta = Math.max(Math.min(delta, 1000), 0);
 
-    let width = mainCanvas.width = window.innerWidth;
-    let height = mainCanvas.height = window.innerHeight;
-    scale = Math.min(width / 600, height / 800, window.devicePixelRatio);
+    resScale = [0.5, 0.75, 1][meta.options.resolution];
+    let width = mainCanvas.width = window.innerWidth * resScale;
+    let height = mainCanvas.height = window.innerHeight * resScale;
+    scale = Math.min(width / 600, height / 800, window.devicePixelRatio * resScale);
     // ctx.fillStyle = "#000";
     // ctx.fillRect(0, 0, width, height);
     ctx.lineJoin = "round";
@@ -55,7 +57,17 @@ function loop(timestamp) {
     updateInMouseState(scene.controls);
     renderControls(scene.controls, { x: 0, y: 0, width, height });
 
-    if (game.options.fpsCounter) {
+
+    if (meta.options.showTouches) {
+        if (isDown) {
+            ctx.fillStyle = "#aaaa";
+            ctx.beginPath();
+            ctx.arc(mousePos.x, mousePos.y, 30 * scale, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    if (meta.options.fpsCounter) {
         ctx.fillStyle = "#fff";
         ctx.font = (10 * scale) + "px " + fontFamily;
         ctx.textAlign = "left";
@@ -65,11 +77,11 @@ function loop(timestamp) {
                 + (1000 / Math.max(...fps)).toFixed(2) + " | "
                 + (1000 / fps[fps.length - 1]).toFixed(2) + " | "
                 + (1000 / Math.min(...fps)).toFixed(2) + ")",
-            15 * scale, window.innerHeight - 35 * scale
+            15 * scale, height - 35 * scale
         )
         ctx.fillText(
             "strain: " + (strain.reduce((x, y) => x + y, 0) / strain.length).toFixed(2) + "ms",
-            15 * scale, window.innerHeight - 20 * scale
+            15 * scale, height - 20 * scale
         )
     }
 
@@ -112,6 +124,7 @@ let pointers = {};
 let mousePos = { x: 0, y: 0 }
 let lastArgs;
 let isTouch;
+let isDown;
 
 function updateInMouseState(cts, clickthrough = false, did = false) {
     let did2 = did;
@@ -165,7 +178,9 @@ function doPointerEvent(pos, cts, event, args, did = false) {
 }
 
 function doMouseEvent(e, type) {
-    let pos = mousePos = { x: e.clientX, y: e.clientY };
+    if (type == "onpointerdown") isDown = true;
+    else if (type == "onpointerup") isDown = false;
+    let pos = mousePos = { x: e.clientX * resScale, y: e.clientY * resScale };
     lastArgs = e;
     doPointerEvent(pos, scene.controls, type, e);
     e.preventDefault();
@@ -175,8 +190,10 @@ function doMouseEvent(e, type) {
     return false;
 }
 function doTouchEvent(e, type) {
+    if (type == "onpointerdown") isDown = true;
+    else if (type == "onpointerup") isDown = false;
     for (let touch of e.changedTouches) {
-        let pos = mousePos = { x: touch.clientX, y: touch.clientY };
+        let pos = mousePos = { x: touch.clientX * resScale, y: touch.clientY * resScale };
         touch.touches = e.touches;
         lastArgs = touch;
         doPointerEvent(pos, scene.controls, type, touch);
@@ -211,8 +228,8 @@ function handleKeys(e) {
             let rect = scene.$board.rect;
             let size = Math.min(rect.width / board.width, rect.height / board.height);
             swapPos = {
-                x: Math.floor((mousePos.x - rect.x) / size),
-                y: Math.floor((mousePos.y - rect.y) / size),
+                x: Math.floor((mousePos.x * resScale - rect.x) / size),
+                y: Math.floor((mousePos.y * resScale - rect.y) / size),
             }
         }
         

@@ -163,7 +163,6 @@ screens.game = function () {
     var introFactor = 1;
     let isAnimating = true;
     let waiter = 0;
-    
     scene.append(controls.base({
         onupdate() {
             if (!scene.$board.paused) {
@@ -250,6 +249,37 @@ screens.game = function () {
                         splash("GAME OVER");
                         gameOver();
                     } else {
+
+                        if (game.options.compliments) {
+                            let score = scene.$board.expCascade * BigInt(scene.$board.cascade);
+                            if (currentMode == "action") score /= 2n;
+                            let comp = "";
+                            if (score > 50n && currentMode != "endless") comp = "GOOD";
+                            if (score > 100n) comp = "EXCELLENT";
+                            if (score > 200n) comp = "AMAZING";
+                            if (score > 400n) comp = "INCREDIBLE";
+                            if (score > 800n) comp = "SPECTACULAR";
+                            if (score > 1600n) comp = "EXTRAORDINARY";
+                            if (score > 3200n) comp = "UNBELIEVABLE";
+                            if (comp) {
+                                let board = scene.$board;
+                                let size = Math.min(board.rect.width / board.board.width, board.rect.height / board.board.height);
+                                scene.$board.scorePopups.push({
+                                    pos: { x: scene.$board.board.width / 2, y: scene.$board.board.height / 2 - 25 / size },
+                                    color: 6,
+                                    text: comp,
+                                    exp: BigInt(Math.ceil(Math.sqrt(Number(score)))) / 10n,
+                                })
+                                scene.$board.scorePopups.push({
+                                    pos: { x: scene.$board.board.width / 2, y: scene.$board.board.height / 2 + 25 / size},
+                                    color: 6,
+                                    text: "(" + scene.$board.scoreCascade.toLocaleString("en-US") + " total points)",
+                                    type: "total",
+                                    exp: 0n,
+                                })
+                            }
+                        }
+                        
                         scene.$board.save();
                     }
                 } else if (waiter > 2) {

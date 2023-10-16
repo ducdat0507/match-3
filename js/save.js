@@ -9,6 +9,11 @@ function getStartMeta() {
             speed: createScoreboard(25000n),
             action: createScoreboard(25000n),
         },
+        options: {
+            resolution: 2,
+            fpsCounter: false,
+            showTouches: false,
+        },
         versionIndex: 0,
     }
 }
@@ -66,7 +71,9 @@ function getStartGame() {
         },
         options: {
             autoHint: true,
-            fpsCounter: false,
+            forceSwipe: false,
+            scorePopups: true,
+            compliments: true,
         },
     }
 }
