@@ -2,7 +2,7 @@ let mainCanvas
 let ctx;
 
 let version = "0.3";
-let versionIndex = 1;
+let versionIndex = 3;
 
 function init() {
     mainCanvas = document.getElementById("main-canvas");
