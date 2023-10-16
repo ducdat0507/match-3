@@ -268,6 +268,7 @@ screens.game = function () {
                                     pos: { x: scene.$board.board.width / 2, y: scene.$board.board.height / 2 - 25 / size },
                                     color: 6,
                                     text: comp,
+                                    type: "comp",
                                     exp: BigInt(Math.ceil(Math.sqrt(Number(score)))) / 10n,
                                 })
                                 scene.$board.scorePopups.push({

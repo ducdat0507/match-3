@@ -1664,12 +1664,13 @@ let controls = {
                 }
 
                 for (let popup of this.scorePopups) {
+                    let dur = ["comp", "total"].includes(popup.type) ? 3000 : 2000;
+
                     if (popup.text || popup.score > 0) {
                         let exp = Number(popup.exp);
                         let str = popup.text ?? popup.score.toLocaleString("en-US");
-
-                        let tScale = ease(Math.min(popup.time ?? 0, 1)) 
-                            * (ease(Math.min(popup.lifetime ?? 0, 1)) * .25 + .75) 
+                        let tScale = ease(Math.min((popup.time ?? 0) * dur / 2000, 1)) 
+                            * (ease(Math.min((popup.lifetime ?? 0) * dur / 2000, 1)) * .25 + .75) 
                             * scale;
                         if (popup.type == "power") tScale *= .75;
                         if (popup.type == "total") tScale *= .75;
@@ -1721,8 +1722,8 @@ let controls = {
                         }
                     }
 
-                    popup.time = (popup.time ?? 0) + delta / 2000
-                    popup.lifetime = (popup.lifetime ?? 0) + delta / 2000
+                    popup.time = (popup.time ?? 0) + delta / dur
+                    popup.lifetime = (popup.lifetime ?? 0) + delta / dur
                 }
                 ctx.globalAlpha = 1;
             },
