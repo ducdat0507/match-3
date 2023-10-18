@@ -44,7 +44,7 @@ function Board(args = {}) {
                 if (cy >= 0) {
                     for (let y = 0; y <= cy; y++) {
                         let yPos = Math.max(
-                            cy - y + (window.innerHeight / 800) / scale * this.height - 5,
+                            cy - y + (mainCanvas.height / 800) / scale * this.height - 5,
                             this.tiles[x + (y - 1) * 100]?.offset.y ?? 0,
                         )
                         this.tiles[x + y * 100] = {
@@ -304,7 +304,7 @@ function Board(args = {}) {
         for (let x = 0; x < board.width; x++) {
             for (let y = 0; y < board.height; y++) {
                 let tile = board.tiles[x + y * 100];
-                tile.offset = { x: 0, y: board.height + (window.innerHeight / 1000) / scale * board.height + Math.random() };
+                tile.offset = { x: 0, y: board.height + (mainCanvas.height / 1000) / scale * board.height + Math.random() };
                 tile.velocity = { x: 0, y: board.height - y * 2 - 5 };
             }
         }

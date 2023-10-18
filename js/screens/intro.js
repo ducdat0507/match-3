@@ -39,7 +39,7 @@ screens.intro = function () {
             }
         },
         onupdate() {
-            let tWidth = Math.min(window.innerWidth / scale, 1000);
+            let tWidth = Math.min(mainCanvas.width / scale, 1000);
             scene.$title.scale = tWidth / 9;
             scene.$title.size = Ex(tWidth * 0.8, 0);
             scene.$title.position.x = -tWidth * 0.4;

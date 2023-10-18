@@ -122,7 +122,7 @@ screens.main = function () {
     
     scene.append(controls.base({
         onupdate() {
-            if (window.innerWidth / scale >= 800) {
+            if (mainCanvas.width / scale >= 800) {
                 scene.$profile.position.x = -278;
                 scene.$profile.size.x = 556;
                 scene.$switchbtn.position.x = -350;

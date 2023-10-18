@@ -188,7 +188,7 @@ screens.game = function () {
                 scene.$progress.progress += (Number(scene.$board.exp) / goal - scene.$progress.progress) * (1 - 0.01 ** (delta / 1000));
             }
 
-            if (window.innerWidth / scale >= 1000) {
+            if (mainCanvas.width / scale >= 1000) {
                 scene.$scorebox.position = Ex(-450, -300, 50, 50);
                 scene.$scorebox.size = Ex(280, 100);
                 scene.$score.position = Ex(-310, -265, 50, 50);
@@ -254,7 +254,7 @@ screens.game = function () {
                             let score = scene.$board.expCascade * BigInt(scene.$board.cascade);
                             if (currentMode == "action") score /= 2n;
                             let comp = "";
-                            if (score > 50n && currentMode != "endless") comp = "GOOD";
+                            if (score > 50n && currentMode != "endless") comp = "NICE";
                             if (score > 100n) comp = "EXCELLENT";
                             if (score > 200n) comp = "AMAZING";
                             if (score > 400n) comp = "INCREDIBLE";
@@ -263,7 +263,7 @@ screens.game = function () {
                             if (score > 3200n) comp = "UNBELIEVABLE";
                             if (comp) {
                                 let board = scene.$board;
-                                let size = Math.min(board.rect.width / board.board.width, board.rect.height / board.board.height);
+                                let size = Math.min(board.rect.width / board.board.width, board.rect.height / board.board.height) / scale;
                                 scene.$board.scorePopups.push({
                                     pos: { x: scene.$board.board.width / 2, y: scene.$board.board.height / 2 - 25 / size },
                                     color: 6,
@@ -341,7 +341,7 @@ screens.game = function () {
                     for (let x = 0; x < board.width; x++) {
                         for (let y = 0; y < board.height; y++) {
                             let tile = board.tiles[x + y * 100];
-                            tile.offset = { x: 0, y: board.height + (window.innerHeight / 1000) / scale * board.height + Math.random() };
+                            tile.offset = { x: 0, y: board.height + (mainCanvas.height / 1000) / scale * board.height + Math.random() };
                             tile.velocity = { x: 0, y: board.height - y * 2 - 5 };
                         }
                     }

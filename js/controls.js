@@ -1536,8 +1536,8 @@ let controls = {
                     ctx.fillRect(
                         0, 
                         0, 
-                        window.innerWidth, 
-                        window.innerHeight, 
+                        mainCanvas.width, 
+                        mainCanvas.height, 
                     );
                 }
 

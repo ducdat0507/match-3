@@ -1,8 +1,8 @@
 let mainCanvas
 let ctx;
 
-let version = "0.3";
-let versionIndex = 3;
+let version = "0.3.1";
+let versionIndex = 4;
 
 function init() {
     mainCanvas = document.getElementById("main-canvas");
@@ -228,8 +228,8 @@ function handleKeys(e) {
             let rect = scene.$board.rect;
             let size = Math.min(rect.width / board.width, rect.height / board.height);
             swapPos = {
-                x: Math.floor((mousePos.x * resScale - rect.x) / size),
-                y: Math.floor((mousePos.y * resScale - rect.y) / size),
+                x: Math.floor((mousePos.x - rect.x) / size),
+                y: Math.floor((mousePos.y - rect.y) / size),
             }
         }
         

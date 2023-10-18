@@ -52,6 +52,11 @@ popups.changelog = function (parent) {
             baseline: "top",
         }));
     }
+    addTitle("v0.3.1", "Oct 18, 2023");
+    addItem("Fixed importing saves throwing an error when there are player data conflicts.");
+    addItem("Fixed keyboard + mouse controls not behaving correctly when lowering the resolution.");
+    addItem("Fixed compliments not being correctly scaled.");
+    addItem("Miscellaneous adjustments.");
 
     addTitle("v0.3", "Oct 16, 2023");
     addItem("Added compliments (those text that appears when you make a move that gives a large amount of points).");

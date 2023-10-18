@@ -141,7 +141,7 @@ function importPlayer(popup) {
                 }
             }
             if (lines[0] != meta.currentPlayer) {
-                popups.importConflict(popup, lines, "player", "exec");
+                popups.importConflict(popup, lines, "player", exec);
             } else {
                 exec();
             }
