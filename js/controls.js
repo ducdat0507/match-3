@@ -1062,6 +1062,13 @@ let controls = {
                                 this.board.tiles[tile].power = "countdown";
                                 this.board.tiles[tile].countdown = Math.max(21 - Number(this.data.level), 7);
                             }
+                        } else if (currentMode == "speed") {
+                            let factor = 0.02
+                            for (let tile of fills) {
+                                if (Math.random() < factor) {
+                                    this.board.tiles[tile].power = "flame";
+                                }
+                            }
                         }
                     }
                     this.matches = this.board.findMatches();
