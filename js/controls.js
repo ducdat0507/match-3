@@ -1066,7 +1066,10 @@ let controls = {
                             let time = this.data.time || 0;
                             let factor = time > 0 ? (0.05 - time / 300 * 0.03) : 0
                             for (let tile of fills) {
-                                if (Math.random() < factor) {
+                                if (Math.random() < 0.01) {
+                                    this.board.tiles[tile].power = "cube";
+                                    this.board.tiles[tile].type = 7;
+                                } else if (Math.random() < factor) {
                                     this.board.tiles[tile].power = "flame";
                                 }
                             }
