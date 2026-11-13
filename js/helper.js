@@ -482,7 +482,7 @@ function getAwardXP(exp) {
 
     if (currentMode == "classic") exp = exp * min(100n + scene.$board.data.level * 5n, 200n) / 100n;
     if (currentMode == "action") exp = exp * min(75n + scene.$board.data.level * 5n, 200n) / 100n;
-    if (currentMode == "speed") exp = exp * min(100n + scene.$board.data.maxLevel * 3n, 200n) / 100n;
+    if (currentMode == "speed") exp = exp * min(80n + scene.$board.data.maxLevel * 2n, 200n) / 100n;
     return exp;
 }
 
