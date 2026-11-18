@@ -56,6 +56,7 @@ popups.changelog = function (parent) {
     addItem("Refreshed user interface!");
     addItem("Added a secret game mode.");
     addItem("Reworked most of the already existing gamemodes - leaderboards and game mode progress will be reset because of this, sorry D:");
+    addItem("Added proper game onboarding, the game will now ask for your name when it's first started and show help for a mode when you play it for the first time.");
 
     addTitle("v0.3.1", "Oct 18, 2023");
     addItem("Fixed importing saves throwing an error when there are player data conflicts.");
