@@ -1,7 +1,7 @@
 let mainCanvas
 let ctx;
 
-let version = "1.0";
+let version = "0.4";
 let versionIndex = 5;
 
 let backgroundColor = [0, 0, 0];

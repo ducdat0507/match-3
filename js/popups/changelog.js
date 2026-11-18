@@ -52,8 +52,9 @@ popups.changelog = function (parent) {
             baseline: "top",
         }));
     }
-    addTitle("v1.0", "May 5, 2024");
+    addTitle("v0.4", "Nov 18, 2026");
     addItem("Refreshed user interface!");
+    addItem("Added a secret game mode.");
     addItem("Reworked most of the already existing gamemodes - leaderboards and game mode progress will be reset because of this, sorry D:");
 
     addTitle("v0.3.1", "Oct 18, 2023");
