@@ -13,7 +13,7 @@ popups.miscmenu = function (parent) {
 
     function addEntry(title, id) {
         let y = holder.size.y;
-        let btn = ButtonWithText(holder, {
+        let btn = prefabs.textButton(holder, {
             position: Ex(30, y + 20),
             size: Ex(-60, 60, 100),
         }, title, () => {
@@ -31,7 +31,7 @@ popups.miscmenu = function (parent) {
 
     
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 120, 0, 75),
         size: Ex(-60, 60, 100),
     }, "Back", () => {

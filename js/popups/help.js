@@ -106,6 +106,7 @@ popups.help = function (parent) {
         action: "Action",
         endless: "Endless",
     }
+    if (secretModeReq.classier()) modeList.classier = "Classier";
     let modeKeys = Object.keys(modeList);
     let viewingMode = "";
 
@@ -135,13 +136,17 @@ popups.help = function (parent) {
                 "\n\nCountdown tiles will drop into the board. Don't let any count to zero!",
             endless: 
                 "\n\n\n\n\n\n\n\n" +
-                "\n\nIn this mode, the game can't end. Reach your inner peace with this stress-free mode!\n\n",
+                "\n\nIn this mode, the game can't end. Reach your inner peace with this stress-free mode!",
+            classier: 
+                "\n\nThis game mode is like Classic, except special tiles can not be created.\n\n" +
+                "\n\nThe game's physics is also tweaked to be a little bit... different?\n\n" +
+                "\n\nBe careful and plan your next moves, the game can still end if you're out of them!",
         }[mode];
     }
 
     setMode(scene.$board ? currentMode : "general");
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 120, 0, 75),
         size: Ex(-60, 60, 100),
     }, "Back", () => {

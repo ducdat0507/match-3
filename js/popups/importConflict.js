@@ -15,14 +15,14 @@ popups.importConflict = function (parent, lines, reason, exec) {
         wrap: true,
     }), "subtitle")
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 40, 0, 75),
         size: Ex(-60, 60, 100),
     }, "Yes", () => {
         exec();
     });
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 120, 0, 75),
         size: Ex(-60, 60, 100),
     }, "No", () => {

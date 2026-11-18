@@ -1,3 +1,5 @@
+let prefabs = {};
+
 let controls = {
     base(args) {
         return {
@@ -481,8 +483,8 @@ let controls = {
         return {
             ...controls.base(),
             board: Board(),
-            back1: "#666666cc",
-            back2: "#888888cc",
+            back1: "#fff3",
+            back2: "#fff5",
 
             swapPos: null,
             matches: {count: 0},
@@ -512,6 +514,12 @@ let controls = {
 
             speedMulti: 1,
             scoreMulti: 1n,
+            multiSwap: true,
+            waitBeforeMatch: false,
+            diagonalFall: false,
+            maxPowerLength: 8,
+            intersectPower: "star",
+            canSave: true,
 
             __mouseActive: false,
             onupdate() {
@@ -522,7 +530,7 @@ let controls = {
                 let matchTiles = {};
                 let powerScores = [];
                 let powers = [];
-                for (let id in this.matches) {
+                if (!this.waitBeforeMatch || this.fallCount <= 0) for (let id in this.matches) {
                     if (id == "count") continue;
                     let match = this.matches[id];
                     let matchable = true;
@@ -601,7 +609,7 @@ let controls = {
                     let tile = this.board.tiles[id];
                     if (!tile) continue;
 
-                    if (tile.swapCheck !== undefined) {
+                    if (!this.waitBeforeMatch || this.fallCount <= 0) if (tile.swapCheck !== undefined) {
                         let swapid = tile.swapCheck;
                         let swap = this.board.tiles[tile.swapCheck];
                         swapChecked[swapid] = true;
@@ -642,9 +650,13 @@ let controls = {
 
                 let fallCount = this.board.width * this.board.height;
                 let swaps = {};
+                let needsGravityUpdate = false;
                 for (let id of Object.keys(this.board.tiles).reverse()) {
                     let tile = this.board.tiles[id];
-                    if (!tile) continue;
+                    if (!tile) {
+                        fallCount--;
+                        continue;
+                    }
                     
                     tile.lifetime = (tile.lifetime || 0) + delta / 1000;
                     
@@ -682,6 +694,7 @@ let controls = {
                             if (tile.animArgs.fourd) {
                                 tile.power = "cube";
                                 tile.type = 7;
+                                matched = true;
                                 delete tile.anim
                                 delete tile.animTime
                                 delete tile.animArgs
@@ -711,26 +724,66 @@ let controls = {
                             delete tile.animArgs;
                             matched = true;
                         }
+                    } else if (tile.anim == "diagonal-fall") {
+                        let target = +id + tile.animArgs.offset;
+                        if (this.board.tiles[+id + 100] && !this.board.tiles[target]) {
+                            this.board.tiles[target] = tile;
+                            tile.offset.x -= tile.animArgs.x;
+                            tile.offset.y = 1;
+                            this.board.tiles[id] = null
+                        } else {
+                            needsGravityUpdate = true;
+                        }
+                        delete tile.anim;
+                        delete tile.animArgs;
                     } else if (this.pauseTimer > 0) {
                         tile.velocity.y = 0;
                     } else if (tile.offset.y > 0 || tile.velocity.y != 0) {
                         let limit = 0;
                         let count = 1;
                         while (count * 100 + +id < this.board.height * 100) {
-                            limit = Math.max((this.board.tiles[count * 100 + +id]?.offset.y - 0.001 || 0), limit);
+                            limit = Math.max((this.board.tiles[count * 100 + +id]?.offset.y - 0.001 - count || 0), limit);
                             count++;
                         }
-                        tile.offset.y = Math.max(tile.offset.y + tile.velocity.y * delta * this.speed * this.speedMulti / 1000, limit);
-                        tile.velocity.y = tile.offset.y > limit ? tile.velocity.y - delta * this.speed * this.speedMulti / 30 : Math.max(0, tile.velocity.y);
+
+                        let yDelta = delta * this.speed * this.speedMulti;
+
+                        tile.offset.y = Math.max(tile.offset.y + tile.velocity.y * yDelta / 1000, limit);
+                        if (tile.offset.x != 0) {
+                            let sign = Math.sign(tile.offset.x);
+                            let abs = Math.abs(tile.offset.x);
+                            tile.offset.x = Math.min(tile.offset.y, abs) * sign;
+                        }
+                        if (tile.offset.y <= 0 && tile.velocity.y < 0) needsGravityUpdate = true;
+                        tile.velocity.y = tile.offset.y > limit ? tile.velocity.y - yDelta / 30 : Math.max(0, tile.velocity.y);
                     } else {
-                        fallCount --;
+                        if (this.diagonalFall && id < this.board.height * 100 - 100 && tile.type < 9) {
+                            let directions = [];
+                            if (!this.board.tiles[+id + 1] || this.board.tiles[+id + 1].type >= 9) {
+                                if (id % 100 < this.board.width - 1 && !this.board.tiles[+id + 101]) {
+                                    directions.push(1);
+                                }
+                                if (id % 100 > 0 && !this.board.tiles[+id + 99]) {
+                                    directions.push(-1);
+                                }
+                            }
+                            if (directions.length > 0) {
+                                let dir = directions[Math.floor(Math.random() * directions.length)];
+                                tile.anim = "diagonal-fall";
+                                tile.animArgs = {offset: 100 + dir, x: dir};
+                            } else {
+                                fallCount --;
+                            }
+                        } else {
+                            fallCount --;
+                        }
                     }
                 }
 
                 for (let id in matchTiles) {
                     let toPower = "";
-                    if (matchTiles[id] >= 2) {
-                        toPower = "star";
+                    if (matchTiles[id] >= 2 ) {
+                        toPower = this.intersectPower;
                     }
 
                     let tile = this.board.tiles[id];
@@ -745,7 +798,7 @@ let controls = {
 
                     } else if (tile.type == 7) {
                         let power = tile.power;
-                        let type = tile.trigger.type;
+                        let type = tile.trigger?.type ?? 0;
                         let [x, y] = [
                             id % 100,
                             Math.floor(id / 100) - Math.round(tile.offset.y),
@@ -978,7 +1031,9 @@ let controls = {
                         6: "nova",
                         7: "sphere",
                         8: "fourd",
-                    }[power.length] ?? "fourd";
+                    }[Math.min(power.length, this.maxPowerLength)];
+
+                    if (!tile.power) continue;
 
                     if (["cube", "sphere", "fourd"].includes(tile.power)) {
                         tile.type = 7;
@@ -1086,6 +1141,10 @@ let controls = {
                     }
                 }
 
+                if (needsGravityUpdate) {
+                    this.board.refill();
+                    this.matches = this.board.findMatches();
+                }
                 if (fallCount == 0 && this.fallCount != 0) {
                     this.moves = this.board.findValidMoves();
                 }
@@ -1104,10 +1163,11 @@ let controls = {
                 this.fallCount = fallCount;
                 this.hintCooldown -= delta;
             },
-            makeMatch(oldPos, newPos) {
+            makeSwap(oldPos, newPos) {
                 if (this.pauseTimer >= 0) return;
                 else if (currentMode == "action" && Object.values(this.board.tiles).find(x => x?.power == "countdown" && x.countdown <= 0)) return;
                 else if (currentMode == "speed" && this.data.time <= 0) return;
+                else if (!this.multiSwap && Object.values(this.board.tiles).find(x => x.offset.y || x.anim || x.swapCkeck)) return;
 
                 let oldTile = this.board.tiles[oldPos.x + oldPos.y * 100];
                 let newTile = this.board.tiles[newPos.x + newPos.y * 100];
@@ -1188,6 +1248,7 @@ let controls = {
                     newTile.animArgs = { offset: { x: -oldTile.animArgs.offset.x, y: -oldTile.animArgs.offset.y } };
                 }
                 
+                return true;
             },
             showHint() {
                 if (this.fallCount || this.hintCooldown > 0) return;
@@ -1215,8 +1276,7 @@ let controls = {
                 
                 if (this.swapPos) {
                     if (Math.abs(pos.x - this.swapPos.x) + Math.abs(pos.y - this.swapPos.y) == 1 && !game.options.forceSwipe) {
-                        this.makeMatch(this.swapPos, pos);
-                        this.swapPos = null;
+                        if (this.makeSwap(this.swapPos, pos)) this.swapPos = null;
                     } else if (Math.abs(pos.x - this.swapPos.x) + Math.abs(pos.y - this.swapPos.y) == 0) {
                         this.swapPos = null;
                     } else {
@@ -1240,8 +1300,7 @@ let controls = {
                     y: Math.floor((e.y - this.rect.y) / size),
                 }
                 if (this.__mouseActive && this.swapPos && Math.abs(pos.x - this.swapPos.x) + Math.abs(pos.y - this.swapPos.y) == 1) {
-                    this.makeMatch(this.swapPos, pos);
-                    this.swapPos = null;
+                    if (this.makeSwap(this.swapPos, pos)) this.swapPos = null;
                 } 
             },
             onpointerup(e) {
@@ -1252,7 +1311,7 @@ let controls = {
                 }
                 if (this.swapPos) {
                     if (Math.abs(pos.x - this.swapPos.x) + Math.abs(pos.y - this.swapPos.y) == 1) {
-                        this.makeMatch(this.swapPos, pos);
+                        this.makeSwap(this.swapPos, pos);
                     }
                 }
             },
@@ -1739,6 +1798,8 @@ let controls = {
                 ctx.globalAlpha = 1;
             },
             save() {
+                if (!this.canSave) return;
+
                 let data = {
                     score: this.score,
                     exp: this.exp,
@@ -1759,6 +1820,10 @@ let controls = {
                 for (let x = 0; x < this.board.width; x++) {
                     for (let y = 0; y < this.board.height; y++) {
                         let tile = this.board.get(x, y);
+                        if (!tile) {
+                            data.board += "__";
+                            continue;
+                        }
                         data.board += tile.type.toString()[0] + (powers[tile.power] || "_");
                         if (tile.power == "countdown") data.board += tile.countdown.toString(36).padStart(2, "0");
                     }
@@ -1787,6 +1852,7 @@ let controls = {
                 let p = 0;
                 for (let x = 0; x < this.board.width; x++) {
                     for (let y = 0; y < this.board.height; y++) {
+                        if (data.board[p] == '_') continue;
                         let tile = this.board.get(x, y) || { lifetime: 0 };
                         tile.type = +(data.board[p]);
                         tile.power = powers[data.board[p + 1]] || "";

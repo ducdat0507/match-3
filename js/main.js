@@ -1,8 +1,11 @@
 let mainCanvas
 let ctx;
 
-let version = "0.3.1";
-let versionIndex = 4;
+let version = "1.0";
+let versionIndex = 5;
+
+let backgroundColor = [0, 0, 0];
+let targetColor = [0, 0, 0];
 
 function init() {
     mainCanvas = document.getElementById("main-canvas");
@@ -48,8 +51,14 @@ function loop(timestamp) {
     let width = mainCanvas.width = window.innerWidth * resScale;
     let height = mainCanvas.height = window.innerHeight * resScale;
     scale = Math.min(width / 600, height / 800, window.devicePixelRatio * resScale);
-    // ctx.fillStyle = "#000";
-    // ctx.fillRect(0, 0, width, height);
+
+    backgroundColor = colorMix(targetColor, backgroundColor, 0.3 ** (delta / 1000));
+    let gradient = ctx.createLinearGradient(0, 0, 0, height);
+    gradient.addColorStop(0, "rgb(" + backgroundColor[0] * 255 + ", " + backgroundColor[1] * 255 + "," + backgroundColor[2] * 255 + ")");
+    gradient.addColorStop(1, "rgb(" +backgroundColor[0] ** 1.5 * 200 + ", " + backgroundColor[1] ** 1.5 * 200 + "," + backgroundColor[2] ** 1.5 * 200 + ")");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
     ctx.lineJoin = "round";
 
 
@@ -236,10 +245,10 @@ function handleKeys(e) {
         let { x, y } = swapPos;
 
         switch (e.key) {
-            case "w": scene.$board.makeMatch(swapPos, { x, y: y - 1 }); break;
-            case "s": scene.$board.makeMatch(swapPos, { x, y: y + 1 }); break;
-            case "a": scene.$board.makeMatch(swapPos, { x: x - 1, y }); break;
-            case "d": scene.$board.makeMatch(swapPos, { x: x + 1, y }); break;
+            case "w": scene.$board.makeSwap(swapPos, { x, y: y - 1 }); break;
+            case "s": scene.$board.makeSwap(swapPos, { x, y: y + 1 }); break;
+            case "a": scene.$board.makeSwap(swapPos, { x: x - 1, y }); break;
+            case "d": scene.$board.makeSwap(swapPos, { x: x + 1, y }); break;
             case "ArrowUp": scene.$board.swapPos = { x, y: Math.max(y - 1, 0) }; break;
             case "ArrowDown": scene.$board.swapPos = { x, y: Math.min(y + 1, board.height - 1) }; break;
             case "ArrowLeft": scene.$board.swapPos = { x: Math.max(x - 1, 0), y }; break;

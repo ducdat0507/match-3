@@ -1,4 +1,4 @@
-var meta = {};
+var meta = {}, isFirstPlay = false;
 
 function getStartMeta() {
     return {
@@ -6,6 +6,7 @@ function getStartMeta() {
         players: {},
         scores: {
             classic: createScoreboard(12500n),
+            classier: [],
             speed: createScoreboard(25000n),
             action: createScoreboard(25000n),
         },
@@ -40,6 +41,7 @@ function load() {
         console.log(e);
         meta = getStartMeta();
         meta.versionIndex = versionIndex;
+        isFirstPlay = true;
     }
     if (!meta.currentPlayer) {
         createPlayer("Player 1");
@@ -58,6 +60,7 @@ var game = {};
 function getStartGame() {
     return {
         boards: {},
+        played: {},
         stats: {
             level: 1n,
             exp: 0n,
@@ -68,6 +71,12 @@ function getStartGame() {
             colors: {},
 
             timePlayed: 0,
+
+            bestLevel: {
+                classic: 0,
+                classier: 0,
+                action: 0,
+            }
         },
         options: {
             autoHint: true,
@@ -164,6 +173,7 @@ function deepCopy(target, source) {
 }
 
 function addTileToStats(tile) {
+    if (scene.$board && !scene.$board.canSave) return;
     game.stats.total++;
     if (scene.$board?.board.types == 7) {
         game.stats.colors[tile.type] = BigInt(game.stats.colors[tile.type] || 0n) + 1n;

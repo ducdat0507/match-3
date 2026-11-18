@@ -4,14 +4,14 @@ popups.gamemenu = function (parent) {
     let popup = doPopup(parent);
     popup.$title.text = "Menu";
     
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 40, 0, 75),
         size: Ex(-60, 60, 100),
     }, "How to Play", () => {
         popups.help(popup);
     });
     
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 120, 0, 75),
         size: Ex(-40, 60, 50),
     }, "Main Menu", () => {
@@ -19,7 +19,7 @@ popups.gamemenu = function (parent) {
         loadScreen("main");
     });
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(10, 120, 50, 75),
         size: Ex(-40, 60, 50),
     }, "Continue →", () => {

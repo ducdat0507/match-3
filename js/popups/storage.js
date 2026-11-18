@@ -24,21 +24,21 @@ popups.storage = function (parent) {
         wrap: true,
     }), "subtitle")
 
-    ButtonWithText(holder, {
+    prefabs.textButton(holder, {
         position: Ex(30, 300, 0),
         size: Ex(-40, 60, 50),
     }, "Backup Player", () => {
         exportPlayer();
     });
 
-    ButtonWithText(holder, {
+    prefabs.textButton(holder, {
         position: Ex(10, 300, 50),
         size: Ex(-40, 60, 50),
     }, "Restore Backup", () => {
         importPlayer(popup);
     });
 
-    ButtonWithText(holder, {
+    prefabs.textButton(holder, {
         position: Ex(30, 540, 0),
         size: Ex(-60, 60, 100),
     }, "Request Persistent Storage", () => {
@@ -51,7 +51,7 @@ popups.storage = function (parent) {
         }
     }, "persist");
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 120, 0, 75),
         size: Ex(-60, 60, 100),
     }, "Back", () => {

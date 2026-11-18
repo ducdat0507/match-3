@@ -43,7 +43,7 @@ popups.options = function (parent) {
             style: perPlayer ? "italic" : "",
             align: "left",
         }));
-        let upbutton = ButtonWithText(holder, {
+        let upbutton = prefabs.textButton(holder, {
             position: Ex(-90, desc ? y + 5 : y, 100),
             size: Ex(60, 60),
         }, "+", () => {
@@ -57,7 +57,7 @@ popups.options = function (parent) {
             text: "",
             scale: 25,
         }));
-        let downbutton = ButtonWithText(holder, {
+        let downbutton = prefabs.textButton(holder, {
             position: Ex(-270, desc ? y + 5 : y, 100),
             size: Ex(60, 60),
         }, "-", () => {
@@ -91,7 +91,7 @@ popups.options = function (parent) {
             style: perPlayer ? "italic" : "",
             align: "left",
         }));
-        let button = ButtonWithText(holder, {
+        let button = prefabs.textButton(holder, {
             position: Ex(-150, desc ? y + 5 : y, 100),
             size: Ex(120, 60),
         }, "", () => {
@@ -133,7 +133,7 @@ popups.options = function (parent) {
 
     holder.size.y += 220;
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 120, 0, 75),
         size: Ex(-60, 60, 100),
     }, "Back", () => {

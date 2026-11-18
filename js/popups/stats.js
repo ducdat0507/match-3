@@ -77,7 +77,7 @@ popups.stats = function (parent) {
     addStatEntry("Total time played", formatDuration(game.stats.timePlayed));
     holder.size.y += 20;
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 120, 0, 75),
         size: Ex(-60, 60, 100),
     }, "Back", () => {

@@ -4,7 +4,7 @@ popups.playerDel = function (parent, id) {
     let popup = doPopup(parent);
     popup.$title.text = "Delete Player?";
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 40, 0, 75),
         size: Ex(-60, 60, 100),
     }, "Yes", () => {
@@ -18,7 +18,7 @@ popups.playerDel = function (parent, id) {
         popups.switcher();
     });
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 120, 0, 75),
         size: Ex(-60, 60, 100),
     }, "No", () => {

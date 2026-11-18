@@ -8,6 +8,7 @@ function doPopup(parent) {
         position: parent ? Ex(-280, 0, 50) : Ex(0, 0),
         size: parent ? Ex(560, 0, 0, 100) : Ex(0, 0, 100, 100),
         fill: "#0000",
+        onclose() {},
         close() {
             if (!popupAnim) {
                 popupAnim = true;
@@ -83,6 +84,7 @@ function doPopup(parent) {
             popup.$fill.position.ey = 100 * clamp01(x / 150);
             popup.fill = "rgba(0, 0, 0, " + (1 - clamp01(x / 150)) * .75 + ")";
             if (x >= 150) {
+                popup.onclose();
                 scene.remove(popup);
                 popupAnim = false;
                 return true;

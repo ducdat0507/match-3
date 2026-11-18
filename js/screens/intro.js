@@ -1,4 +1,6 @@
 screens.intro = function () {
+    
+    targetColor = [0.1, 0.1, 0.3];
 
     scene.append(controls.label({
         position: Ex(-300, -100, 50, 45),

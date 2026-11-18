@@ -52,6 +52,10 @@ popups.changelog = function (parent) {
             baseline: "top",
         }));
     }
+    addTitle("v1.0", "May 5, 2024");
+    addItem("Refreshed user interface!");
+    addItem("Reworked most of the already existing gamemodes - leaderboards and game mode progress will be reset because of this, sorry D:");
+
     addTitle("v0.3.1", "Oct 18, 2023");
     addItem("Fixed importing saves throwing an error when there are player data conflicts.");
     addItem("Fixed keyboard + mouse controls not behaving correctly when lowering the resolution.");
@@ -111,7 +115,7 @@ popups.changelog = function (parent) {
         }
     }), "logic");
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 120, 0, 75),
         size: Ex(-60, 60, 100),
     }, "Back", () => {

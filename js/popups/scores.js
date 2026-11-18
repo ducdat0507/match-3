@@ -154,7 +154,7 @@ popups.scores = function (parent) {
 
     setMode("classic");
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 120, 0, 75),
         size: Ex(-60, 60, 100),
     }, "Back", () => {

@@ -5,14 +5,14 @@ popups.playerOpt = function (parent, id) {
     popup.$title.text = meta.players[id].name;
 
     if (meta.currentPlayer != id) {
-        ButtonWithText(popup.$content, {
+        prefabs.textButton(popup.$content, {
             position: Ex(30, -40, 0, 75),
             size: Ex(-60, 60, 100),
         }, "Switch Player", () => {
             switchPlayer(id);
             loadScreen("main");
         });
-        ButtonWithText(popup.$content, {
+        prefabs.textButton(popup.$content, {
             position: Ex(30, 40, 0, 75),
             size: Ex(-60, 60, 100),
         }, "Delete Player", () => {
@@ -27,7 +27,7 @@ popups.playerOpt = function (parent, id) {
         }))
     }
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 120, 0, 75),
         size: Ex(-60, 60, 100),
     }, "Back", () => {

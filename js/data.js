@@ -1,5 +1,19 @@
 let fontFamily = "'Overused Grotesk', Helvetica, Arial, sans-serif";
 
+let modeColors = {
+    classic:     [0.3,  0.4,  0.7 ],
+    action:      [0.5,  0.3,  0.4 ],
+    speed:       [0.6,  0.3,  0.3 ],
+    endless:     [0.4,  0.4,  0.4 ],
+    classier:    [0.3,  0.3,  0.6 ],
+    fireworks:   [0.1,  0.1,  0.2 ],
+    sandbox:     [0.0,  0.0,  0.0 ],
+}
+
+let secretModeReq = {
+    classier: () => game.stats.bestLevel.classic > 10,
+}
+
 let titles = [
     "Novice",
     "Apprentice",

@@ -1,18 +1,31 @@
 screens.game = function () {
 
+    let controlArgs = {}
     let boardArgs = {}
     let boardData = {}
     let onupdate = () => {}
     
     if (currentMode == "classic") {
         boardArgs.alwaysHaveMoves = false;
+        controlArgs.maxPowerLength = 6;
+        onupdate = () => {
+            scene.$board.scoreMulti = scene.$board.data.level;
+        }
+    } else if (currentMode == "classier") {
+        boardArgs.alwaysHaveMoves = false;
+        controlArgs.multiSwap = false;
+        controlArgs.waitBeforeMatch = true;
+        controlArgs.maxPowerLength = 0;
+        controlArgs.intersectPower = "";
         onupdate = () => {
             scene.$board.scoreMulti = scene.$board.data.level;
         }
     } else if (currentMode == "action") {
         boardArgs.types = 6;
+        controlArgs.maxPowerLength = 6;
         onupdate = () => {
             scene.$board.scoreMulti = scene.$board.data.level;
+            scene.$board.board.types = scene.$board.data.level < 8 ? 6 : 7;
         }
     } else if (currentMode == "speed") {
         scene.append(controls.base({
@@ -22,13 +35,13 @@ screens.game = function () {
         scene.$multibox.append(controls.rect({
             position: Ex(0, 0),
             size: Ex(0, 0, 100, 100),
-            fill: "#888a",
+            fill: "#fff3",
         }), "fill")
         scene.$multibox.append(controls.label({
             position: Ex(0, 0, 50, 50),
             scale: 300,
             style: "700",
-            fill: "#fff",
+            fill: "#fff4",
         }), "text")
 
         boardData.time = 300;
@@ -48,19 +61,27 @@ screens.game = function () {
             scene.$multibox.$text.text = scene.$board.data.level > 1n ? scene.$board.data.level.toLocaleString("en-US") + "x" : "";
             scene.$board.scoreMulti = 5n * scene.$board.data.level;
         }
-    }
+    } else if (currentMode == "fireworks") {
+        controlArgs.canSave = false;
+        boardArgs.width = 16;
+        boardArgs.height = 16;
+        boardArgs.types = 3;
+        controlArgs.multiSwap = false;
+        controlArgs.maxPowerLength = 4;
+        controlArgs.intersectPower = "";
+    } 
 
     // The Score
     scene.append(controls.rect({
         position: Ex(-10000, -10000),
         size: Ex(180, 60),
         text: 0,
-        fill: "#555a",
+        fill: "#fff3",
     }), "scorebox")
     scene.$scorebox.append(controls.rect({
         position: Ex(2, 2),
         size: Ex(-4, -4, 100, 100),
-        fill: "#555a",
+        fill: "#fff3",
     }), "fill")
     scene.append(controls.label({
         position: Ex(-10000, -10000),
@@ -77,7 +98,7 @@ screens.game = function () {
     scene.append(controls.button({
         position: Ex(-10000, -10000),
         size: Ex(180, 60),
-        fill: "#aaa7",
+        fill: "#fff4",
         onclick() {
             scene.$board.showHint();
         }
@@ -102,7 +123,7 @@ screens.game = function () {
     scene.append(controls.button({
         position: Ex(-10000, -10000),
         size: Ex(180, 60),
-        fill: "#aaa7",
+        fill: "#fff4",
         onclick() {
             if (!isAnimating) {
                 let popup = popups.gamemenu();
@@ -131,14 +152,13 @@ screens.game = function () {
     scene.append(controls.gembar({
         position: Ex(-10000, -10000),
         size: Ex(600, 40),
-        fill: "#555a",
+        fill: "#fff2",
     }), "progress")
 
     // The board
     scene.append(controls.board({
-        board: Board({
-            types: boardArgs.types ?? 7
-        }),
+        board: Board(boardArgs),
+        ...controlArgs,
         position: Ex(-10000, -10000),
         size: Ex(600, 600),
         data: {
@@ -157,8 +177,6 @@ screens.game = function () {
         thickness: 8,
         wrap: true,
     }), "splash")
-
-    scene.$board.board.alwaysHaveMoves = boardArgs.alwaysHaveMoves ?? scene.$board.board.alwaysHaveMoves;
 
     var introFactor = 1;
     let isAnimating = true;
@@ -229,21 +247,24 @@ screens.game = function () {
 
             if (scene.$board.fallCount == 0) {
                 waiter++;
-                if (waiter == 2) {
-                    if (!isAnimating && Number(scene.$board.exp) >= goal) {
+                if (waiter == 2 + scene.$board.waitBeforeMatch) {
+                    if (currentMode == "fireworks" && scene.$board.score > 0) {
+                        splash("THE SHOW'S OVER");
+                        gameOver();
+                    } else if (!isAnimating && Number(scene.$board.exp) >= goal) {
                         isAnimating = true;
                         levelUp();
                     } else if (scene.$board.moves.count == 0) {
-                        if (currentMode == "classic") {
-                            splash("NO MORE MOVES");
-                            gameOver();
-                        } else {
+                        if (scene.$board.board.alwaysHaveMoves) {
                             let tiles = Object.values(scene.$board.board.tiles);
                             let tile;
                             while (!tile || tile.power)
                                 tile = tiles[Math.floor(Math.random() * tiles.length)]
                             tile.type = 7;
                             tile.power = "cube"
+                        } else {
+                            splash("NO MORE MOVES");
+                            gameOver();
                         }
                     } else if (currentMode == "action" && Object.values(scene.$board.board.tiles).find((x => !x?.anim && x?.power == "countdown" && x.countdown <= 0))) {
                         splash("GAME OVER");
@@ -254,13 +275,13 @@ screens.game = function () {
                             let score = scene.$board.expCascade * BigInt(scene.$board.cascade);
                             if (currentMode == "action") score /= 2n;
                             let comp = "";
-                            if (score > 50n && currentMode != "endless") comp = "NICE";
-                            if (score > 100n) comp = "EXCELLENT";
-                            if (score > 200n) comp = "AMAZING";
-                            if (score > 400n) comp = "INCREDIBLE";
-                            if (score > 800n) comp = "SPECTACULAR";
-                            if (score > 1600n) comp = "EXTRAORDINARY";
-                            if (score > 3200n) comp = "UNBELIEVABLE";
+                            if (score > 50n && currentMode != "endless") comp = "NICE!";
+                            if (score > 100n) comp = "EXCELLENT!!";
+                            if (score > 200n) comp = "AMAZING!!!";
+                            if (score > 400n) comp = "INCREDIBLE!!!!";
+                            if (score > 800n) comp = "SPECTACULAR!!!!!";
+                            if (score > 1600n) comp = "EXTRAORDINARY!!!!!!";
+                            if (score > 3200n) comp = "UNBELIEVABLE!!!!!!!!";
                             if (comp) {
                                 let board = scene.$board;
                                 let size = Math.min(board.rect.width / board.board.width, board.rect.height / board.board.height) / scale;
@@ -336,6 +357,7 @@ screens.game = function () {
                 let exp = getAwardXP(scene.$board.exp);
 
                 scene.$board.data.level++;
+                game.stats.bestLevel[currentMode] = Math.max(scene.$board.data.level, game.stats.bestLevel[currentMode]);
 
                 rankBarLevelPopup(exp, () => {
                     for (let x = 0; x < board.width; x++) {
@@ -369,13 +391,29 @@ screens.game = function () {
     }
 
     function gameOver() {
-        delete game.boards[currentMode];
-        save();
-        setTimeout(() => popups.result(), 3000);
+        if (currentMode == "fireworks") {
+            setTimeout(() => loadScreen("main"), 3000);
+        } else {
+            delete game.boards[currentMode];
+            save();
+            setTimeout(() => popups.result(), 3000);
+        }
     }
 
     scene.$board.load();
     scene.$logic.onupdate();
     startAnimation(intro);
-    setTimeout(() => splash("GO"), 2000);
+    setTimeout(() => {
+        if (!game.played[currentMode]) {
+            scene.$board.paused = true;
+            game.played[currentMode] = true;
+            let popup = popups.help();
+            popup.onclose = () => {
+                scene.$board.paused = false;
+                splash("GO");
+            }
+        } else {
+            splash("GO");
+        }
+    }, 2000);
 }

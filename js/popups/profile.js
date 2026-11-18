@@ -61,21 +61,21 @@ popups.profile = function (parent) {
         scale: 25,
     }), "goal")
     
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 40, 0, 75),
         size: Ex(-40, 60, 50),
     }, "Statistics", () => {
         popups.stats(popup);
     });
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(10, 40, 50, 75),
         size: Ex(-40, 60, 50),
     }, "High Scores", () => {
         popups.scores(popup);
     });
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 120, 0, 75),
         size: Ex(-60, 60, 100),
     }, "Back", () => {

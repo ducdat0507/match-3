@@ -26,7 +26,7 @@ popups.playerName = function (parent, id) {
     }), "init");
 
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 40, 0, 75),
         size: Ex(-60, 60, 100),
     }, "Confirm", () => {
@@ -55,7 +55,7 @@ popups.playerName = function (parent, id) {
         }
     });
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 120, 0, 75),
         size: Ex(-60, 60, 100),
     }, "Cancel", () => {

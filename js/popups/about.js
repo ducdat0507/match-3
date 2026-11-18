@@ -49,27 +49,26 @@ popups.about = function (parent) {
     holder.size.y += 40;
 
     addTitle("Created by:");
-    ButtonWithText(holder, {
+    prefabs.textButton(holder, {
         position: Ex(30, holder.size.y + 30),
         size: Ex(-60, 60, 100),
     }, "ducdat0507", () => {
         window.open("https://ducdat0507.github.io", '_blank');;
     });
     
-    holder.size.y += 120;
+    holder.size.y += 100;
 
-    addTitle("This game is open source!");
-    ButtonWithText(holder, {
+    prefabs.textButton(holder, {
         position: Ex(30, holder.size.y + 30),
         size: Ex(-60, 60, 100),
-    }, "GitHub Repository", () => {
+    }, "Source code on GitHub", () => {
         window.open("https://github.com/ducdat0507/match-3", '_blank');;
     });
     
     holder.size.y += 120;
 
-    addTitle("Made with HTML5 and vanilla JavaScript.");
-    addTitle("(zero libraries used!!!!)");
+    addTitle("Made with HTML5 and vanilla JavaScript");
+    addTitle("(yippee)");
     
     holder.size.y += 40;
 
@@ -79,7 +78,7 @@ popups.about = function (parent) {
     holder.size.y += 40;
 
     addTitle("Font attribution:");
-    ButtonWithText(holder, {
+    prefabs.textButton(holder, {
         position: Ex(30, holder.size.y + 30),
         size: Ex(-60, 60, 100),
     }, '"Overused Grotesk" by RandomMaerks', () => {
@@ -92,7 +91,7 @@ popups.about = function (parent) {
         fill: "#fff7",
     }));
     holder.size.y += 12;
-    ButtonWithText(holder, {
+    prefabs.textButton(holder, {
         position: Ex(30, holder.size.y + 30),
         size: Ex(-60, 60, 100),
     }, "View Font License", () => {
@@ -110,7 +109,7 @@ popups.about = function (parent) {
     
     holder.size.y += 110;
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 120, 0, 75),
         size: Ex(-60, 60, 100),
     }, "Back", () => {

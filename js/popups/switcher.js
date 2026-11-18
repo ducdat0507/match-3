@@ -14,7 +14,7 @@ popups.switcher = function (parent) {
 
     function addEntry(id) {
         let y = holder.size.y;
-        let btn = ButtonWithText(holder, {
+        let btn = prefabs.textButton(holder, {
             position: Ex(30, y + 20),
             size: Ex(-60, 60, 100),
         }, meta.currentPlayer == id ? "⮞   " + meta.players[id].name + "   ⮜" : meta.players[id].name, () => {
@@ -25,21 +25,21 @@ popups.switcher = function (parent) {
 
     for (let id in meta.players) addEntry(id);
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 40, 0, 75),
         size: Ex(-40, 60, 50),
     }, "New Player", () => {
         popups.playerName(popup);
     });
     
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(10, 40, 50, 75),
         size: Ex(-40, 60, 50),
     }, "Manage Storage", () => {
         popups.storage(popup);
     });
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 120, 0, 75),
         size: Ex(-60, 60, 100),
     }, "Back", () => {

@@ -171,7 +171,7 @@ popups.result = function (parent) {
         }
     }
     
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(30, 120, 0, 75),
         size: Ex(-40, 60, 50),
     }, "Main Menu", () => {
@@ -180,7 +180,7 @@ popups.result = function (parent) {
         loadScreen("main");
     });
 
-    ButtonWithText(popup.$content, {
+    prefabs.textButton(popup.$content, {
         position: Ex(10, 120, 50, 75),
         size: Ex(-40, 60, 50),
     }, "Restart", () => {
