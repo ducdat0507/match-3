@@ -150,6 +150,10 @@ function formatDuration(ms) {
     return txt
 }
 
+function max(a, b) {
+    return a > b ? a : b;
+}
+
 function getAwardXP(exp) {
     let min = (...args) => args.reduce((m, e) => e < m ? e : m);
 

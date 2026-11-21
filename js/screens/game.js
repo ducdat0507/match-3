@@ -357,7 +357,7 @@ screens.game = function () {
                 let exp = getAwardXP(scene.$board.exp);
 
                 scene.$board.data.level++;
-                game.stats.bestLevel[currentMode] = Math.max(scene.$board.data.level, game.stats.bestLevel[currentMode]);
+                game.stats.bestLevel[currentMode] = max(scene.$board.data.level, game.stats.bestLevel[currentMode]);
 
                 rankBarLevelPopup(exp, () => {
                     for (let x = 0; x < board.width; x++) {
